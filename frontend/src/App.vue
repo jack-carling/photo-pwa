@@ -1,7 +1,7 @@
 <template>
   <main class="app">
     <NavigationTop />
-      <router-view id="router"></router-view>
+    <router-view id="router"></router-view>
     <NavigationBottom />
   </main>
 </template>
@@ -21,6 +21,9 @@ export default {
 <style>
 * {
   box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
 }
 #app {
   -webkit-font-smoothing: antialiased;
