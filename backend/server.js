@@ -6,10 +6,6 @@ app.use(express.json());
 
 let connections = [];
 
-app.get('/api/test', (req, res) => {
-  res.json({ msg: 'Hello from /test' });
-});
-
 app.get('/api/chat', (req, res) => {
   let connection = { req, res };
   connections.push(connection);

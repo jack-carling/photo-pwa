@@ -27,15 +27,6 @@ export default {
     },
   },
   methods: {
-    async sendMessage(message) {
-      let data = JSON.stringify({ username: this.username, message });
-      let res = await fetch('/api/chat/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: data,
-      });
-      res = await res.json();
-    },
     scrollDown() {
       this.$refs.area.scrollTo({
         top: this.$refs.area.scrollHeight,
