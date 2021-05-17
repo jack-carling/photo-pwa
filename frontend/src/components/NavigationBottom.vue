@@ -86,6 +86,7 @@ div.navigation div {
   display: grid;
   place-items: center;
   color: #eceff1;
+  cursor: pointer;
 }
 input,
 input:focus {
