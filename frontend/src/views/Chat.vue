@@ -11,15 +11,19 @@
 export default {
   created() {
     this.$store.dispatch('startChat');
-    const name = prompt("What's your name?") || 'Anonymous';
-    this.$store.commit('setName', name);
+    if (!this.online) {
+      this.$router.push('/account');
+    }
   },
   computed: {
     messages() {
       return this.$store.state.messages;
     },
-    username() {
+    name() {
       return this.$store.state.user.name;
+    },
+    online() {
+      return this.$store.state.user.online;
     },
   },
   methods: {
@@ -30,7 +34,7 @@ export default {
       });
     },
     checkSelf(message) {
-      if (this.username === message.username) {
+      if (this.name === message.username) {
         return true;
       } else {
         return false;

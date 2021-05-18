@@ -1,6 +1,13 @@
-const express = require('express');
-const app = express();
 const port = 5000;
+
+require('dotenv').config();
+
+const { express, app } = require('mongoosy')({
+  connect: {
+    url: process.env.MONGO_DB,
+    useFindAndModify: false,
+  },
+});
 
 app.use(express.json());
 

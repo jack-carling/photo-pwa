@@ -15,6 +15,9 @@ export default {
     NavigationTop,
     NavigationBottom,
   },
+  async created() {
+    this.$store.dispatch('check');
+  },
 };
 </script>
 
@@ -39,5 +42,11 @@ main.app {
   display: grid;
   grid-template-rows: min-content auto min-content;
   height: 100vh;
+}
+.input-field input[type='text']:focus,
+.input-field input[type='email']:focus,
+.input-field input[type='password']:focus {
+  border-bottom: 1px solid #00acc1 !important;
+  box-shadow: 0 1px 0 0 #00acc1 !important;
 }
 </style>
