@@ -1,10 +1,6 @@
 <template>
   <main ref="area">
-    <div
-      v-for="(message, index) in messages"
-      :class="{ self: checkSelf(message) }"
-      :key="index"
-    >
+    <div v-for="(message, index) in messages" :class="{ self: checkSelf(message) }" :key="index">
       {{ message.message }}
       <span class="name" v-html="displayInfo(message)"></span>
     </div>
