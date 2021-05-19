@@ -8,11 +8,15 @@ const store = createStore({
     user: {
       online: false,
     },
+    accountError: '',
     messages: [],
   },
   mutations: {
     pushMessage(state, message) {
       state.messages.push(message);
+    },
+    clearErrors(state) {
+      state.accountError = '';
     },
   },
   actions: {
@@ -24,13 +28,12 @@ const store = createStore({
         store.commit('pushMessage', message);
       };
     },
-    async login({ dispatch }, payload) {
+    async login({ state, dispatch }, payload) {
       const res = await Login.login({ email: payload.email, password: payload.password });
-      console.log(res);
       if (res._id) {
         dispatch('check');
       } else {
-        // Handle incorrect info
+        state.accountError = res.error;
       }
     },
     async check({ state }) {

@@ -11,9 +11,13 @@
         <label for="email">Email</label>
       </div>
       <div class="input-field">
-        <input id="password" type="password" v-model="password" />
+        <input id="password" type="password" v-model="password" @keyup.enter="login" />
         <label for="password">Password</label>
       </div>
+      <p class="error" v-if="error">
+        <i class="material-icons">error</i>
+        Email or password is incorrect.
+      </p>
       <button class="btn cyan darken-1" @click="login">Login</button>
       <p>Not a user yet? <a @click="loginPage = false">Register account</a></p>
     </section>
@@ -28,18 +32,28 @@
         <label for="email">Email</label>
       </div>
       <div class="input-field">
-        <input id="password" type="password" v-model="password" />
+        <input id="password" type="password" v-model="password" @keyup.enter="register" />
         <label for="password">Password</label>
       </div>
+      <p class="error" v-if="registerError">
+        <i class="material-icons">error</i>
+        {{ registerError }}
+      </p>
       <button class="btn cyan darken-1" @click="register">Register</button>
       <p>Already a user? <a @click="loginPage = true">Login</a></p>
     </section>
+    <p class="redirect animate__animated animate__bounceIn" v-if="redirect">
+      <i class="material-icons">notifications</i>
+      Please login to access chat.
+    </p>
   </main>
 </template>
 
 <script>
 import mongoosy from 'mongoosy/frontend';
 const { User, Login } = mongoosy;
+
+import { testName, testEmail, testPassword } from '../services/validate.js';
 
 export default {
   data() {
@@ -48,32 +62,59 @@ export default {
       email: '',
       password: '',
       loginPage: true,
+      registerError: '',
+      redirect: false,
     };
   },
   computed: {
     online() {
       return this.$store.state.user.online;
     },
+    error() {
+      return this.$store.state.accountError;
+    },
   },
   methods: {
     async register() {
+      const nameTest = testName(this.name);
+      if (nameTest) {
+        this.registerError = nameTest;
+        return;
+      }
+      const emailTest = testEmail(this.email);
+      if (emailTest) {
+        this.registerError = emailTest;
+        return;
+      }
+      const passwordTest = testPassword(this.password);
+      if (passwordTest) {
+        this.registerError = passwordTest;
+        return;
+      }
       let user = new User({
         name: this.name,
         email: this.email,
         password: this.password,
       });
       const res = await user.save();
-      const error = res.error ?? false;
+      let error = res.error ?? false;
+      if (error?.keyValue) {
+        error = Object.keys(error.keyValue).join('');
+      }
+      if (error === 'name') {
+        this.registerError = 'This username is already taken.';
+      } else if (error === 'email') {
+        this.registerError = 'This email already exists.';
+      }
       if (!error) {
         const payload = { email: this.email, password: this.password };
         this.$store.dispatch('login', payload);
-        this.clear();
+        this.loginPage = true;
       }
     },
     async login() {
       const payload = { email: this.email, password: this.password };
       this.$store.dispatch('login', payload);
-      this.clear();
     },
     async logout() {
       this.$store.dispatch('logout');
@@ -82,13 +123,53 @@ export default {
       this.name = '';
       this.email = '';
       this.password = '';
+      this.$store.commit('clearErrors');
+      const labels = document.querySelectorAll('label');
+      labels.forEach((label) => label.classList.remove('active'));
     },
+    isRedirected() {
+      this.redirect = this.$route.query.redirect === 'true' ? true : false;
+    },
+  },
+  watch: {
+    loginPage() {
+      this.clear();
+    },
+    online() {
+      this.clear();
+    },
+    '$route.query.redirect'() {
+      this.isRedirected();
+    },
+  },
+  beforeUnmount() {
+    this.$store.commit('clearErrors');
+  },
+  mounted() {
+    this.isRedirected();
   },
 };
 </script>
 
 <style scoped>
 h4 {
-  margin: 0 0 1rem 0;
+  margin: 0 0 2rem 0;
+}
+p.error {
+  display: flex;
+  align-items: center;
+  color: #607d8b;
+}
+p.redirect {
+  border: 1px solid #607d8b;
+  color: #607d8b;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+p.error i,
+p.redirect i {
+  margin-right: 0.5rem;
 }
 </style>

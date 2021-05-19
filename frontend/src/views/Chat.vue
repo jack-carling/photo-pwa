@@ -10,9 +10,10 @@
 <script>
 export default {
   created() {
-    this.$store.dispatch('startChat');
     if (!this.online) {
-      this.$router.push('/account');
+      this.$router.push('/account?redirect=true');
+    } else {
+      this.$store.dispatch('startChat');
     }
   },
   computed: {
