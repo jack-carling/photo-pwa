@@ -3,7 +3,10 @@
     <div v-show="!captured" ref="vcontainer">
       <video autoplay ref="video"></video>
     </div>
-    <div v-show="captured" class="canvas" ref="container"><canvas ref="canvas"></canvas></div>
+    <div v-show="captured" class="canvas" ref="container">
+      <canvas v-show="!photoFromStore.isSaved" ref="canvas"></canvas>
+      <img v-show="photoFromStore.isSaved" :src="photoFromStore.data" alt="" />
+    </div>
     <div class="controls" v-if="!captured">
       <div class="button">
         <i class="material-icons">upload</i>
@@ -14,7 +17,7 @@
       </div>
     </div>
     <div class="controls" v-else>
-      <div class="button">
+      <div class="button" @click="toggleGeo">
         <template v-if="geoPending">
           <Preloader />
         </template>
@@ -23,7 +26,7 @@
           <i v-else class="material-icons">location_off</i>
         </template>
       </div>
-      <div class="button">
+      <div class="button" @click="confirmUpload">
         <i class="material-icons">done</i>
       </div>
       <div class="button" @click="captured = false">
@@ -42,6 +45,10 @@ export default {
   },
   async mounted() {
     this.setAspectRatio();
+    if (this.photoFromStore.isSaved) {
+      this.captured = true;
+      this.getLocation();
+    }
     const constraints = { video: { facingMode: this.facingMode } };
     if (navigator.mediaDevices) {
       return navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
@@ -66,13 +73,22 @@ export default {
       alert('User Media API not supported.');
       return;
     }
+    //
   },
   beforeUnmount() {
-    this.track.stop();
+    if (this.track.stop) {
+      this.track.stop();
+    }
+    if (this.photo) {
+      this.$store.commit('savePhoto', this.photo);
+    } else if (!this.captured) {
+      this.$store.commit('savePhoto', false);
+    }
   },
   data() {
     return {
       captured: false,
+      photo: '',
       facingMode: 'user',
       geoSupported: false,
       geoPending: true,
@@ -83,6 +99,12 @@ export default {
     size() {
       return this.$refs.vcontainer.clientWidth + 'px';
     },
+    photoFromStore() {
+      return this.$store.state.photo;
+    },
+    online() {
+      return this.$store.state.user.online;
+    },
   },
   methods: {
     setAspectRatio() {
@@ -91,10 +113,13 @@ export default {
       this.$refs.vcontainer.style.height = this.size;
     },
     takePhoto() {
+      this.$store.commit('savePhoto', false);
+
       const canvas = this.$refs.canvas;
       const media = this.$refs.video;
       const mWidth = media.videoWidth;
       const mHeight = media.videoHeight;
+
       const size = Math.min(mWidth, mHeight);
 
       canvas.width = size;
@@ -116,11 +141,32 @@ export default {
 
       context.scale(-1, 1);
       context.drawImage(media, sx, sy, mWidth, mHeight);
+      this.photo = canvas.toDataURL();
       this.captured = true;
       this.getLocation();
     },
     toggleFacingMode() {
       this.facingMode = this.facingMode === 'user' ? { exact: 'environment' } : 'user';
+    },
+    confirmUpload() {
+      if (!this.online) {
+        this.$router.push('/account?redirect=camera');
+      } else {
+        if (this.geoPending) {
+          this.$store.commit('saveLocations', false);
+        }
+        this.$router.push('/upload');
+      }
+    },
+    toggleGeo() {
+      if (this.geoPending) return;
+
+      if (this.geoSupported) {
+        this.geoSupported = false;
+        this.$store.commit('saveLocations', false);
+      } else {
+        this.getLocation();
+      }
     },
     getLocation() {
       this.geoPending = true;
@@ -131,9 +177,15 @@ export default {
             const geoLoc = { lat: location.coords.latitude, lng: location.coords.longitude };
             let res = await fetch(`https://geocode.xyz/${geoLoc.lat},${geoLoc.lng}?json=1`);
             res = await res.json();
-            console.log(res);
             if (res?.success === false) {
               this.geoSupported = false;
+            } else {
+              const city = res.city ?? '';
+              const region = res.region ?? '';
+              const country = res.country ?? '';
+              const locations = [];
+              locations.push(city, region, country);
+              this.$store.commit('saveLocations', locations);
             }
             this.geoPending = false;
           },
@@ -167,9 +219,13 @@ video {
 }
 canvas {
   max-width: 100%;
+  animation: flash 0.3s ease 1;
+}
+img {
+  max-width: 100%;
 }
 div.canvas {
-  background-color: #000;
+  background-color: #fff;
   display: grid;
   place-items: center;
 }
@@ -206,5 +262,13 @@ div.shutter::after {
 }
 .inactive {
   opacity: 0.5;
+}
+@keyframes flash {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 </style>

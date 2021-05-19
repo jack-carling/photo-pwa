@@ -9,7 +9,10 @@ const store = createStore({
       online: false,
     },
     accountError: '',
+    locations: [],
     messages: [],
+    photo: { data: '', isSaved: false },
+    photoSettings: {},
   },
   mutations: {
     pushMessage(state, message) {
@@ -17,6 +20,22 @@ const store = createStore({
     },
     clearErrors(state) {
       state.accountError = '';
+    },
+    saveLocations(state, locations) {
+      if (locations) {
+        state.locations = locations;
+      } else {
+        state.locations = [];
+      }
+    },
+    savePhoto(state, photo) {
+      if (!photo) {
+        state.photo.data = '';
+        state.photo.isSaved = false;
+      } else {
+        state.photo.data = photo;
+        state.photo.isSaved = true;
+      }
     },
   },
   actions: {

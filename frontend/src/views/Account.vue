@@ -1,13 +1,14 @@
 <template>
   <main v-if="online">
     <h1>Account</h1>
-    <button class="btn cyan darken-1" @click="logout">Logout</button>
+    <p>Logged in as: {{ name }}</p>
+    <button class="btn waves-effect waves-light cyan darken-1" @click="logout">Logout</button>
   </main>
   <main v-else>
     <section v-if="loginPage">
       <h4>Login</h4>
       <div class="input-field">
-        <input id="email" type="email" autocomplete="off" v-model="email" />
+        <input id="email" type="email" autocomplete="off" v-model="email" @keyup.enter="login" />
         <label for="email">Email</label>
       </div>
       <div class="input-field">
@@ -18,17 +19,17 @@
         <i class="material-icons">error</i>
         Email or password is incorrect.
       </p>
-      <button class="btn cyan darken-1" @click="login">Login</button>
+      <button class="btn waves-effect waves-light cyan darken-1" @click="login">Login</button>
       <p>Not a user yet? <a @click="loginPage = false">Register account</a></p>
     </section>
     <section v-else>
       <h4>Register</h4>
       <div class="input-field">
-        <input id="name" type="text" autocomplete="off" v-model="name" />
+        <input id="name" type="text" autocomplete="off" v-model="name" @keyup.enter="register" />
         <label for="name">Username</label>
       </div>
       <div class="input-field">
-        <input id="email" type="email" autocomplete="off" v-model="email" />
+        <input id="email" type="email" autocomplete="off" v-model="email" @keyup.enter="register" />
         <label for="email">Email</label>
       </div>
       <div class="input-field">
@@ -39,19 +40,19 @@
         <i class="material-icons">error</i>
         {{ registerError }}
       </p>
-      <button class="btn cyan darken-1" @click="register">Register</button>
+      <button class="btn waves-effect waves-light cyan darken-1" @click="register">Register</button>
       <p>Already a user? <a @click="loginPage = true">Login</a></p>
     </section>
     <p class="redirect animate__animated animate__bounceIn" v-if="redirect">
       <i class="material-icons">notifications</i>
-      Please login to access chat.
+      {{ redirect }}
     </p>
   </main>
 </template>
 
 <script>
 import mongoosy from 'mongoosy/frontend';
-const { User, Login } = mongoosy;
+const { User } = mongoosy;
 
 import { testName, testEmail, testPassword } from '../services/validate.js';
 
@@ -69,6 +70,9 @@ export default {
   computed: {
     online() {
       return this.$store.state.user.online;
+    },
+    name() {
+      return this.$store.state.user.name;
     },
     error() {
       return this.$store.state.accountError;
@@ -128,7 +132,13 @@ export default {
       labels.forEach((label) => label.classList.remove('active'));
     },
     isRedirected() {
-      this.redirect = this.$route.query.redirect === 'true' ? true : false;
+      if (this.$route.query.redirect === 'chat') {
+        this.redirect = 'Please login to access chat.';
+      } else if (this.$route.query.redirect === 'camera') {
+        this.redirect = 'Please login to upload photos or images.';
+      } else {
+        this.redirect = '';
+      }
     },
   },
   watch: {

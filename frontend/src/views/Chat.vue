@@ -11,7 +11,7 @@
 export default {
   created() {
     if (!this.online) {
-      this.$router.push('/account?redirect=true');
+      this.$router.push('/account?redirect=chat');
     } else {
       this.$store.dispatch('startChat');
     }
