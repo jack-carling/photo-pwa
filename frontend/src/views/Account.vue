@@ -1,7 +1,7 @@
 <template>
   <main v-if="online">
     <h1>Account</h1>
-    <p>Logged in as: {{ name }}</p>
+    <p>Logged in as: {{ displayName }}</p>
     <button class="btn waves-effect waves-light cyan darken-1" @click="logout">Logout</button>
   </main>
   <main v-else>
@@ -71,7 +71,7 @@ export default {
     online() {
       return this.$store.state.user.online;
     },
-    name() {
+    displayName() {
       return this.$store.state.user.name;
     },
     error() {
