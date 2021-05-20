@@ -1,6 +1,7 @@
 <template>
-  <body>
+  <main>
     <section class="hero-banner">
+      <img class="homepage-hero" src="..\assets\homepage-hero.png" alt="homepage-hero">
       <h1>Home</h1>
       <div class="homepage-elements">
         <img class="dark-logo" src="../assets/Apperture_dark_logo.svg" />
@@ -40,7 +41,7 @@
         </div>
       </div>
     </section>
-  </body>
+  </main>
 </template>
   
 <script>
@@ -68,9 +69,17 @@ html {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  background-image: url("../assets/homepage_hero.svg");
+  /* background-image: url("../assets/homepage_hero.svg");
   background-size: contain;
-  background-repeat: no-repeat;
+  background-repeat: no-repeat; */
+}
+
+.homepage-hero {
+  position: absolute;
+  left: 0px;
+  top: 50px;  
+  z-index: -1;
+  /* background: linear-gradient(gray, white); */
 }
 
 .homepage-elements {
