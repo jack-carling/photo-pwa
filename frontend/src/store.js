@@ -11,8 +11,9 @@ const store = createStore({
     accountError: '',
     locations: [],
     messages: [],
-    photo: { data: '', isSaved: false },
+    photo: { data: '', isSaved: false, size: '' },
     photoSettings: {},
+    size: '',
   },
   mutations: {
     pushMessage(state, message) {
@@ -36,6 +37,9 @@ const store = createStore({
         state.photo.data = photo;
         state.photo.isSaved = true;
       }
+    },
+    saveSize(state, size) {
+      state.size = size;
     },
   },
   actions: {

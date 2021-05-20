@@ -1,6 +1,8 @@
 <template>
-  <main>
-    <img ref="image" :src="source" alt="" />
+  <main ref="area">
+    <div ref="icontainer" class="image-container">
+      <img ref="image" :src="source" alt="" />
+    </div>
     <p class="info">
       <i class="material-icons">location_on</i>
       Where was this photo taken?
@@ -8,29 +10,36 @@
     <section class="radio">
       <article v-if="locations.length">
         <label v-for="(location, i) in locations" :key="i">
-          <input class="with-gap" v-model="pickedLocation" name="group" type="radio" :value="location" />
+          <input
+            class="with-gap"
+            v-model="pickedLocation"
+            name="group"
+            type="radio"
+            :value="location"
+            :disabled="pending"
+          />
           <span>{{ location }}</span>
         </label>
       </article>
-      <label v-if="!locations.length">
-        <input class="with-gap" v-model="pickedLocation" name="group" type="radio" value="hide" />
+      <label>
+        <input class="with-gap" v-model="pickedLocation" name="group" type="radio" value="hide" :disabled="pending" />
         <span>Hide location</span>
       </label>
       <label>
-        <input class="with-gap" v-model="pickedLocation" name="group" type="radio" value="pick" />
+        <input class="with-gap" v-model="pickedLocation" name="group" type="radio" value="pick" :disabled="pending" />
         <span>Enter manually</span>
       </label>
     </section>
     <div class="input-field location" v-if="pickManually">
-      <input id="manual" type="text" autocomplete="off" v-model="inputLocation" />
+      <input id="manual" type="text" autocomplete="off" v-model="inputLocation" :disabled="pending" />
       <label for="manual">Location</label>
     </div>
     <p class="info">
       <i class="material-icons">extension</i>
-      Add tags:
+      Add tags (optional)
     </p>
     <div class="input-field">
-      <input id="manual" type="text" autocomplete="off" v-model="inputTags" @keyup.enter="addTag" />
+      <input id="manual" type="text" autocomplete="off" v-model="inputTags" @keyup.enter="addTag" :disabled="pending" />
       <label for="manual">Type and press enter</label>
     </div>
     <section class="tags">
@@ -39,11 +48,29 @@
         <i class="material-icons" @click="deleteTag(i)">close</i>
       </div>
     </section>
-    <button class="btn waves-effect waves-light cyan darken-1">Upload</button>
+    <p class="error" v-if="error">
+      <i class="material-icons">error</i>
+      {{ error }}
+    </p>
+    <button class="btn waves-effect waves-light cyan darken-1" @click="upload" :disabled="pending">Upload</button>
+    <template v-if="pending">
+      <div class="progress cyan darken-1" v-if="!uploaded">
+        <div class="indeterminate blue-grey"></div>
+      </div>
+      <p class="info" v-else>
+        <i class="material-icons">check</i>
+        Photo successfully uploaded!
+      </p>
+    </template>
   </main>
 </template>
 
 <script>
+import { dataURItoBlob } from '../services/blob.js';
+
+import mongoosy from 'mongoosy/frontend';
+const { Upload } = mongoosy;
+
 export default {
   data() {
     return {
@@ -53,11 +80,20 @@ export default {
       locations: [],
       inputTags: '',
       tags: [],
+      error: '',
+      pending: false,
+      uploaded: false,
     };
   },
   computed: {
     source() {
       return this.$store.state.photo.data;
+    },
+    size() {
+      return this.$store.state.size;
+    },
+    _id() {
+      return this.$store.state.user._id;
     },
   },
   methods: {
@@ -71,7 +107,58 @@ export default {
       this.inputTags = '';
     },
     deleteTag(index) {
+      if (this.pending) return;
       this.tags.splice(index, 1);
+    },
+    async upload() {
+      if ((this.pickManually && this.inputLocation === '') || (!this.pickManually && !this.pickedLocation)) {
+        this.error = 'Please enter a location.';
+        return;
+      }
+
+      this.addTag();
+
+      this.pending = true;
+
+      let file = this.$store.state.photo.data;
+      file = dataURItoBlob(file);
+
+      const data = new FormData();
+      data.append('file', file, 'file.jpg');
+
+      let res = await fetch('/api/upload', {
+        method: 'POST',
+        body: data,
+      });
+      res = await res.json();
+
+      if (res.success) {
+        const url = `/uploads/${res.path}`;
+        const location = this.pickManually ? this.inputLocation : this.pickedLocation;
+        const time = Date.now();
+
+        let upload = new Upload({
+          user: this._id,
+          url: url,
+          location: location,
+          tags: this.tags,
+          time: time,
+        });
+        let uploaded = await upload.save();
+        console.log(uploaded);
+        this.uploaded = true;
+        this.$nextTick(() => {
+          this.scrollDown();
+        });
+      } else {
+        this.pending = false;
+      }
+    },
+    scrollDown() {
+      this.$refs.area.scrollTo({
+        top: this.$refs.area.scrollHeight,
+        behavior: 'smooth',
+      });
     },
   },
   mounted() {
@@ -79,14 +166,31 @@ export default {
       this.$router.push('/camera');
       return;
     }
+
+    this.$refs.image.style.maxHeight = this.size;
+    this.$refs.image.style.maxWidth = this.size;
+    this.$refs.icontainer.style.maxHeight = this.size;
+    this.$refs.icontainer.style.minHeight = this.size;
+    this.$refs.icontainer.style.maxWidth = this.size;
+
     this.locations = this.$store.state.locations.map((location) => {
       if (location) return location;
     });
+
     setTimeout(() => {
       this.$refs.image.style.maxHeight = '100px';
+      this.$refs.image.style.maxWidth = '100px';
+      this.$refs.icontainer.style.maxHeight = '100px';
+      this.$refs.icontainer.style.minHeight = '100px';
+      this.$refs.icontainer.style.maxWidth = '100px';
     }, 200);
     if (!this.locations.length) {
       this.pickedLocation = 'hide';
+    }
+  },
+  beforeUnmount() {
+    if (this.uploaded) {
+      this.$store.commit('savePhoto', false);
     }
   },
   watch: {
@@ -103,10 +207,14 @@ export default {
 </script>
 
 <style scoped>
+div.image-container {
+  transition: all 1s linear;
+  display: grid;
+  place-items: center;
+  background-color: #eee;
+}
 img {
-  max-width: 100%;
-  max-height: 100%;
-  transition: max-height 1s linear;
+  transition: all 1s linear;
 }
 section.radio,
 section.radio article {
@@ -122,12 +230,14 @@ section.radio article {
 [type='radio'].with-gap:checked + span:after {
   border: 2px solid #00acc1;
 }
-p.info {
+p.info,
+p.error {
   display: flex;
   align-items: center;
   color: #607d8b;
 }
-p.info i {
+p.info i,
+p.error i {
   margin-right: 0.5rem;
 }
 
