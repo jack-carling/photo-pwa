@@ -5,11 +5,14 @@
     </div>
     <div v-show="captured" class="canvas" ref="container">
       <canvas v-show="!photoFromStore.isSaved" ref="canvas"></canvas>
-      <img v-show="photoFromStore.isSaved" :src="photoFromStore.data" alt="" />
+      <img v-show="photoFromStore.isSaved" :src="photoFromStore.data" alt="" ref="image" />
     </div>
     <div class="controls" v-if="!captured">
       <div class="button">
-        <i class="material-icons">upload</i>
+        <label>
+          <input @change="displayImage" ref="input" type="file" accept="image/*" />
+          <i class="material-icons">upload</i>
+        </label>
       </div>
       <div class="shutter" @click="takePhoto"></div>
       <div class="button" @click="toggleFacingMode">
@@ -47,6 +50,7 @@ export default {
     this.setAspectRatio();
     if (this.photoFromStore.isSaved) {
       this.captured = true;
+      this.checkImageSize();
       this.getLocation();
     }
     const constraints = { video: { facingMode: this.facingMode } };
@@ -73,7 +77,6 @@ export default {
       alert('User Media API not supported.');
       return;
     }
-    //
   },
   beforeUnmount() {
     if (this.track.stop) {
@@ -81,6 +84,7 @@ export default {
     }
     if (this.photo) {
       this.$store.commit('savePhoto', this.photo);
+      this.$store.commit('saveSize', this.size);
     } else if (!this.captured) {
       this.$store.commit('savePhoto', false);
     }
@@ -141,7 +145,7 @@ export default {
 
       context.scale(-1, 1);
       context.drawImage(media, sx, sy, mWidth, mHeight);
-      this.photo = canvas.toDataURL();
+      this.photo = canvas.toDataURL('image/jpeg', 0.8);
       this.captured = true;
       this.getLocation();
     },
@@ -201,6 +205,33 @@ export default {
         this.geoSupported = false;
       }
     },
+    displayImage() {
+      this.captured = true;
+      this.getLocation();
+
+      const file = this.$refs.input.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.addEventListener('load', (e) => {
+          const image = new Image();
+          image.src = e.target.result;
+          image.addEventListener('load', (e) => {
+            this.checkImageSize();
+          });
+          this.$store.commit('savePhoto', e.target.result);
+          this.$store.commit('saveSize', this.size);
+        });
+        reader.readAsDataURL(file);
+      }
+    },
+    checkImageSize() {
+      const image = this.$refs.image;
+      if (image.height > image.width) {
+        this.$refs.image.style.height = this.size;
+      } else {
+        this.$refs.image.style.height = 'auto';
+      }
+    },
   },
 };
 </script>
@@ -225,9 +256,10 @@ img {
   max-width: 100%;
 }
 div.canvas {
-  background-color: #fff;
+  background-color: #eee;
   display: grid;
   place-items: center;
+  width: 100%;
 }
 div.controls {
   display: grid;
@@ -242,6 +274,9 @@ div.button {
   color: #eceff1;
   display: grid;
   place-items: center;
+}
+div.button label {
+  color: #eceff1;
 }
 div.shutter {
   width: 90px;
@@ -262,6 +297,9 @@ div.shutter::after {
 }
 .inactive {
   opacity: 0.5;
+}
+input[type='file'] {
+  display: none;
 }
 @keyframes flash {
   0% {
