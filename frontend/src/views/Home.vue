@@ -5,13 +5,13 @@
         <form>
           <div class="input-field">
             <input id="search" type="search" required placeholder="Search for tags, locations and people">
-            <label class="label-icon" for="search"><i class="material-icons">search</i></label>
+            <label class="label-icon" for="search"><i class="material-icons" @click="$router.push('/search')">search</i></label>
           </div>
         </form>
       <div class="homepage-elements">
         <img class="dark-logo" src="../assets/Apperture_dark_logo.svg" />
         <a class="waves-effect waves-light cyan darken-1 btn">Login</a>
-        <a class="waves-effect waves-light cyan darken-1 btn">Sign up</a>
+        <a class="waves-effect waves-light cyan darken-1 btn" @click="$router.push('/register')">Sign up</a>
       </div>
 
       <div class="container" style="overflow: hidden">
