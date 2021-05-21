@@ -4,3 +4,9 @@
 */dist-ssr
 *.local
 *.env
+
+# Ignore everything in uploads
+backend/static/uploads/*
+
+# Keep the uploads folder
+!backend/static/uploads/.gitkeep 

@@ -11,7 +11,7 @@ const store = createStore({
     accountError: '',
     locations: [],
     messages: [],
-    photo: { data: '', isSaved: false, size: '' },
+    photo: { data: '', isSaved: false },
     photoSettings: {},
     size: '',
   },

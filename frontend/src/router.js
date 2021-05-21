@@ -4,7 +4,6 @@ import Home from './views/Home.vue';
 import Camera from './views/Camera.vue';
 import Chat from './views/Chat.vue';
 import Account from './views/Account.vue';
-import Register from './views/Register.vue';
 import Search from './views/Search.vue';
 import Upload from './views/Upload.vue';
 
@@ -26,10 +25,6 @@ const router = createRouter({
     {
       path: '/account',
       component: Account,
-    },
-    {
-      path: '/register',
-      component: Register,
     },
     {
       path: '/search',
