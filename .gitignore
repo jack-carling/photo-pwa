@@ -9,4 +9,4 @@
 backend/static/uploads/*
 
 # Keep the uploads folder
-!backend/static/uploads/.gitkeep 
+!backend/static/uploads/.gitkeep

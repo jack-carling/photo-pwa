@@ -1,6 +1,6 @@
 <template>
   <div class="main cyan darken-1">
-    <div v-if="chat" @click="$router.go(-1)">
+    <div v-if="chat" @click="leaveRoom">
       <i class="material-icons">arrow_back</i>
     </div>
     <div v-else></div>
@@ -12,11 +12,21 @@
 export default {
   computed: {
     chat() {
-      if (this.$route.path === '/chat') {
+      if (this.$route.path === '/chat' && this.chatTarget !== '') {
         return true;
       } else {
         return false;
       }
+    },
+    chatTarget() {
+      return this.$store.state.chat.chatTarget;
+    },
+  },
+  methods: {
+    async leaveRoom() {
+      let res = await fetch(`/api/chat/leave/${this.chatTarget}?id=${this.id}`);
+      res = await res.json();
+      this.$store.commit('setChatTarget', false);
     },
   },
 };
@@ -28,6 +38,7 @@ div.main {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 1px solid #fff;
 }
 div.main div {
   width: 50px;
