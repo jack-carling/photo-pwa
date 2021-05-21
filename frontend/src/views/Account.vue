@@ -136,6 +136,8 @@ export default {
         this.redirect = 'Please login to access chat.';
       } else if (this.$route.query.redirect === 'camera') {
         this.redirect = 'Please login to upload photos or images.';
+      } else if (this.$route.query.redirect === 'signup') {
+        this.loginPage = false;
       } else {
         this.redirect = '';
       }
