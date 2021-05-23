@@ -23,9 +23,16 @@
       </form>
       <div class="homepage-elements">
         <img class="dark-logo" src="../assets/Apperture_dark_logo.svg" />
-<<<<<<< Updated upstream
-        <a class="waves-effect waves-light cyan darken-1 btn" @click="$router.push('/account')">Login</a>
-        <a class="waves-effect waves-light cyan darken-1 btn" @click="$router.push('/account?redirect=signup')">Sign up</a>
+        <a
+          class="waves-effect waves-light cyan darken-1 btn"
+          @click="$router.push('/account')"
+          >Login</a
+        >
+        <a
+          class="waves-effect waves-light cyan darken-1 btn"
+          @click="$router.push('/account?redirect=signup')"
+          >Sign up</a
+        >
       </div>
       <div class="container" style="overflow: hidden">
         <div class="row">
@@ -42,10 +49,16 @@
             />
           </div>
           <div class="col s12 m6 14">
-            <img class="image_3" src="../assets/pexels-jimmy-teoh-1010657.jpg" />
+            <img
+              class="image_3"
+              src="../assets/pexels-jimmy-teoh-1010657.jpg"
+            />
           </div>
           <div class="col s6 m6 14">
-            <img class="image_4" src="../assets/pexels-david-bartus-586687.jpg" />
+            <img
+              class="image_4"
+              src="../assets/pexels-david-bartus-586687.jpg"
+            />
           </div>
           <div class="col s6 m6 14">
             <img class="image_5" src="../assets/pexels-belle-co-345750.jpg" />
@@ -57,17 +70,12 @@
             />
           </div>
           <div class="col s12 m6 14">
-            <img class="image_6" src="../assets/pexels-esrageziyor-7472287.jpg" />
+            <img
+              class="image_6"
+              src="../assets/pexels-esrageziyor-7472287.jpg"
+            />
           </div>
         </div>
-=======
-        <a class="waves-effect waves-light cyan darken-1 btn">Login</a>
-        <a
-          class="waves-effect waves-light cyan darken-1 btn"
-          @click="$router.push('/register')"
-          >Sign up</a
-        >
->>>>>>> Stashed changes
       </div>
     </section>
     <section class="images">
