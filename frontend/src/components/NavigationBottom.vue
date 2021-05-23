@@ -1,5 +1,5 @@
 <template>
-  <div v-if="chat" class="chat">
+  <div v-if="activeChat" class="chat">
     <input @keyup.enter="sendMessage" v-model="message" type="text" placeholder="Aa" />
     <div><i class="material-icons" @click="sendMessage">send</i></div>
   </div>
@@ -30,23 +30,28 @@ export default {
     };
   },
   computed: {
-    username() {
-      return this.$store.state.user.name;
+    id() {
+      return this.$store.state.user._id;
     },
-    chat() {
-      if (this.$route.path === '/chat') {
+    activeChat() {
+      if (this.$route.path === '/chat' && this.chat.chatTarget !== '') {
         return true;
       } else {
         return false;
       }
+    },
+    chat() {
+      return this.$store.state.chat;
     },
   },
   methods: {
     async sendMessage() {
       if (this.message === '') return;
       let data = JSON.stringify({
-        username: this.username,
+        user: this.id,
+        chatTarget: this.chat.chatTarget,
         message: this.message,
+        chatType: this.chat.chatType,
       });
       let res = await fetch('/api/chat/message', {
         method: 'POST',
