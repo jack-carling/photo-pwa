@@ -14,10 +14,24 @@ const store = createStore({
     photo: { data: '', isSaved: false },
     photoSettings: {},
     size: '',
+    chat: { chatTarget: '', chatType: '' },
   },
   mutations: {
     pushMessage(state, message) {
       state.messages.push(message);
+    },
+    previousMessages(state, messages) {
+      state.messages = [...messages];
+    },
+    setChatTarget(state, payload) {
+      if (!payload) {
+        state.messages = [];
+        state.chat.chatTarget = '';
+        state.chat.chatType = '';
+      } else {
+        state.chat.chatTarget = payload.room;
+        state.chat.chatType = payload.type;
+      }
     },
     clearErrors(state) {
       state.accountError = '';
@@ -43,12 +57,12 @@ const store = createStore({
     },
   },
   actions: {
-    startChat(store) {
-      let sse = new EventSource('/api/chat');
+    startChat({ commit, state }) {
+      let sse = new EventSource(`/api/chat?id=${state.user._id}`);
       sse.onmessage = (event) => {
         let message = JSON.parse(event.data);
         if (message.initial) return;
-        store.commit('pushMessage', message);
+        commit('pushMessage', message);
       };
     },
     async login({ state, dispatch }, payload) {
@@ -74,6 +88,19 @@ const store = createStore({
         delete state.user[property];
       }
       state.user.online = false;
+    },
+    async leaveRoom({ commit, state }) {
+      if (state.chat.chatTarget !== '' && state.chat.chatType !== 'private') {
+        /*let extraQuery = '';
+        if (state.chat.chatType === 'location' || state.chat.chatType === 'tag') {
+          extraQuery = `&type=${state.chat.chatType}`;
+        }*/
+        let res = await fetch(
+          `/api/chat/leave/${state.chat.chatTarget}?id=${state.user.id}&type=${state.chat.chatType}`
+        );
+        res = await res.json();
+        commit('setChatTarget', false);
+      }
     },
   },
 });

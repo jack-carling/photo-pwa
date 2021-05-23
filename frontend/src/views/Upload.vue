@@ -145,7 +145,6 @@ export default {
           time: time,
         });
         let uploaded = await upload.save();
-        console.log(uploaded);
         this.uploaded = true;
         this.$nextTick(() => {
           this.scrollDown();

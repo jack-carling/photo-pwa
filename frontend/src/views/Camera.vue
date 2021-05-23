@@ -14,7 +14,7 @@
           <i class="material-icons">upload</i>
         </label>
       </div>
-      <div class="shutter" @click="takePhoto"></div>
+      <div class="shutter animate__animated animate__bounceIn" @click="takePhoto"></div>
       <div class="button" @click="toggleFacingMode">
         <i class="material-icons">loop</i>
       </div>
