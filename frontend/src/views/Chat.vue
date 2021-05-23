@@ -2,23 +2,29 @@
   <main ref="area" :class="{ 'no-margin-padding': !chat.chatTarget }">
     <section class="target" v-if="!chat.chatTarget">
       <div class="target" v-for="(chat, i) in chats" :key="i" @click="joinRoom(chat.target, chat.type)">
-        <div class="icon" v-html="displayIcon(chat.type)"></div>
-        <span v-if="chat.type === 'private'"> {{ displayInfo(chat.target) }}</span>
-        <span v-else>{{ chat.target }}</span>
+        <article class="animate__animated animate__flipInX">
+          <div class="icon" v-html="displayIcon(chat.type)"></div>
+          <span v-if="chat.type === 'private'"> {{ displayInfo(chat.target) }}</span>
+          <span v-else>{{ chat.target }}</span>
+        </article>
       </div>
     </section>
 
     <section v-else>
       <div v-for="(message, index) in messages" :key="index" class="chat-container">
-        <span class="time">{{ displayTime(message.time, index) }}</span>
-        <div :class="{ self: checkSelf(message) }">
+        <span class="time animate__animated animate__fadeInDown">{{ displayTime(message.time, index) }}</span>
+        <!-- <div class="animate__animated" :class="{ "['self', 'animate__fadeInRight']": checkSelf(message) }"> -->
+        <div
+          class="animate__animated"
+          :class="[checkSelf(message) ? 'self animate__fadeInRight' : 'animate__fadeInLeft']"
+        >
           {{ message.message }}
           <span class="name" v-html="displayInfo(message.user)"></span>
         </div>
       </div>
     </section>
 
-    <section v-if="!chats.length" :class="{ hide: !fetchedChats }" class="no-chats">
+    <section v-if="!messages.length" :class="{ hide: !fetchedChats }" class="no-chats">
       <div>
         <i class="material-icons">question_answer</i>
         <p>
@@ -44,6 +50,7 @@ export default {
       timestamp: [],
       chats: [],
       fetchedChats: false,
+      scrollBehavior: 'auto',
     };
   },
   created() {
@@ -75,7 +82,7 @@ export default {
     scrollDown() {
       this.$refs.area.scrollTo({
         top: this.$refs.area.scrollHeight,
-        behavior: 'smooth',
+        behavior: this.scrollBehavior,
       });
     },
     checkSelf(message) {
@@ -250,6 +257,11 @@ export default {
           if (!this.messages.length) {
             this.getChats();
           }
+          if (this.chat.chatTarget === '') {
+            this.scrollBehavior = 'auto';
+          } else {
+            this.scrollBehavior = 'smooth';
+          }
         });
       },
     },
@@ -258,6 +270,16 @@ export default {
     this.leaveRoom();
   },
 };
+
+/*scrollBehavior() {
+      setTimeout(() => {
+        if (this.chat.chatTarget === '') {
+          return 'auto';
+        } else {
+          return 'smooth';
+        }
+      }, 500);
+    }, */
 </script>
 
 <style scoped>
@@ -305,12 +327,14 @@ span.time {
   margin: 0 !important;
 }
 section.target div.target {
-  display: flex;
-  align-items: center;
   width: 100vw;
   height: 80px;
   border-bottom: 1px solid #e4e4e4;
   padding: 1rem;
+}
+div.target article {
+  display: flex;
+  align-items: center;
 }
 div.icon {
   width: 50px;
