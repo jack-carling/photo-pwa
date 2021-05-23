@@ -24,8 +24,11 @@ module.exports = (app) => {
   });
 
   app.get('/api/chat/join/:room', (req, res) => {
-    const room = req.params.room;
     const id = req.query.id;
+    const type = req.query.type;
+
+    let room = req.params.room;
+    room = `${room}-${type}`;
 
     if (!rooms[room]) rooms[room] = [];
 
@@ -37,8 +40,11 @@ module.exports = (app) => {
   });
 
   app.get('/api/chat/leave/:room', (req, res) => {
-    const room = req.params.room;
     const id = req.query.id;
+    const type = req.query.type;
+
+    let room = req.params.room;
+    room = `${room}-${type}`;
 
     if (rooms.hasOwnProperty(room)) {
       rooms[room].splice(rooms[room].indexOf(id), 1);
@@ -67,11 +73,20 @@ module.exports = (app) => {
     message = new Message(message);
     await message.save();
 
-    if (rooms[message.chatTarget]) {
-      broadcastRoom(message.chatTarget, message);
+    let target;
+
+    /* If broadcasting, check for photo, location or tag to alter the target */
+    if (message.chatType !== 'private') {
+      target = message.chatTarget + '-' + message.chatType;
+    } else {
+      target = message.chatTarget;
+    }
+
+    if (rooms[target]) {
+      broadcastRoom(target, message);
     } else {
       sendSSE(message.chatTarget, message);
-      sendSSE(message._id, message);
+      sendSSE(message.user, message);
     }
 
     res.json({ success: true });

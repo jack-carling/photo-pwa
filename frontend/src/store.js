@@ -89,6 +89,19 @@ const store = createStore({
       }
       state.user.online = false;
     },
+    async leaveRoom({ commit, state }) {
+      if (state.chat.chatTarget !== '' && state.chat.chatType !== 'private') {
+        /*let extraQuery = '';
+        if (state.chat.chatType === 'location' || state.chat.chatType === 'tag') {
+          extraQuery = `&type=${state.chat.chatType}`;
+        }*/
+        let res = await fetch(
+          `/api/chat/leave/${state.chat.chatTarget}?id=${state.user.id}&type=${state.chat.chatType}`
+        );
+        res = await res.json();
+        commit('setChatTarget', false);
+      }
+    },
   },
 });
 

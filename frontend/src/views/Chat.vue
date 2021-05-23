@@ -1,17 +1,33 @@
 <template>
-  <main ref="area">
-    <article v-if="!chat.chatTarget">
-      <button @click="joinRoom('stockholm', 'location')" class="btn cyan darken-1">Stockholm</button>
-      <button @click="joinRoom('goteborg', 'location')" class="btn cyan darken-1">Göteborg</button>
-    </article>
-
-    <div v-for="(message, index) in messages" :key="index" class="chat-container">
-      <span class="time">{{ displayTime(message.time, index) }}</span>
-      <div :class="{ self: checkSelf(message) }">
-        {{ message.message }}
-        <span class="name" v-html="displayInfo(message.user)"></span>
+  <main ref="area" :class="{ 'no-margin-padding': !chat.chatTarget }">
+    <section class="target" v-if="!chat.chatTarget">
+      <div class="target" v-for="(chat, i) in chats" :key="i" @click="joinRoom(chat.target, chat.type)">
+        <div class="icon" v-html="displayIcon(chat.type)"></div>
+        <span v-if="chat.type === 'private'"> {{ displayInfo(chat.target) }}</span>
+        <span v-else>{{ chat.target }}</span>
       </div>
-    </div>
+    </section>
+
+    <section v-else>
+      <div v-for="(message, index) in messages" :key="index" class="chat-container">
+        <span class="time">{{ displayTime(message.time, index) }}</span>
+        <div :class="{ self: checkSelf(message) }">
+          {{ message.message }}
+          <span class="name" v-html="displayInfo(message.user)"></span>
+        </div>
+      </div>
+    </section>
+
+    <section v-if="!chats.length" :class="{ hide: !fetchedChats }" class="no-chats">
+      <div>
+        <i class="material-icons">question_answer</i>
+        <p>
+          Your chat history looks empty! Try to
+          <a @click="$router.push('/search')">search</a>
+          for something fun to talk about!
+        </p>
+      </div>
+    </section>
   </main>
 </template>
 
@@ -19,11 +35,15 @@
 import mongoosy from 'mongoosy/frontend';
 const { User, Message } = mongoosy;
 
+import { convertTime } from '../services/time.js';
+
 export default {
   data() {
     return {
       names: {},
       timestamp: [],
+      chats: [],
+      fetchedChats: false,
     };
   },
   created() {
@@ -31,6 +51,7 @@ export default {
       this.$router.push('/account?redirect=chat');
     } else {
       this.$store.dispatch('startChat');
+      this.getChats();
     }
   },
   computed: {
@@ -65,57 +86,157 @@ export default {
       }
     },
     displayInfo(user) {
-      return `${this.names[user]}`;
+      if (this.names[user] === undefined) {
+        return '';
+      } else {
+        return `${this.names[user]}`;
+      }
     },
     displayTime(time, index) {
       this.timestamp.push(time);
       const oldTime = this.timestamp[index - 1] ?? 0;
       const newTime = this.timestamp[index];
       const timePassed = newTime - oldTime;
-      /* Only display timestamp if 15 minutes has passed (900000ms) */
+      // Only display timestamp if 15 minutes has passed (900000ms)
       if (timePassed < 900000) return;
-      time = new Date(time);
-      const options = { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-      time = time.toLocaleString('se-SE', options);
-      return time;
+      return convertTime(time);
     },
     async getNames() {
       const set = new Set();
-      this.messages.map((x) => set.add(x.user));
-
-      const id = Array.from(set).pop();
-
-      let names;
-
-      if (!this.names.hasOwnProperty(id)) {
-        names = await User.find();
+      if (this.messages.length) {
+        this.messages.map((x) => set.add(x.user));
       }
+      if (this.chats.length) {
+        this.chats.map((x) => {
+          if (x.type === 'private') set.add(x.target);
+        });
+      }
+
+      if (!set.size) return;
+
+      let names = await User.find();
 
       if (names) {
         set.forEach((name) => {
           const found = names.find((x) => x._id === name);
-          this.names[name] = found.name;
+          this.names[name] = found?.name;
         });
       }
     },
     async joinRoom(room, type) {
       const payload = { room, type };
       this.$store.commit('setChatTarget', payload);
-      let res = await fetch(`/api/chat/join/${this.chat.chatTarget}?id=${this.id}`);
-      res = await res.json();
-      if (res.success) {
-        const messages = await Message.find({
-          chatTarget: this.chat.chatTarget,
-        });
-        this.$store.commit('previousMessages', messages);
-      }
-    },
-    async leaveRoom() {
-      if (this.chat.chatTarget !== '') {
-        let res = await fetch(`/api/chat/leave/${this.chat.chatTarget}?id=${this.id}`);
+      let messages;
+      if (type !== 'private') {
+        let res = await fetch(`/api/chat/join/${this.chat.chatTarget}?id=${this.id}&type=${this.chat.chatType}`);
         res = await res.json();
-        this.$store.commit('setChatTarget', false);
+        if (res.success) {
+          if (this.chat.chatType === 'location' || this.chat.chatType === 'tag') {
+            messages = await Message.find({
+              chatTarget: this.chat.chatTarget,
+              chatType: this.chat.chatType,
+            });
+          } else {
+            messages = await Message.find({
+              chatTarget: this.chat.chatTarget,
+            });
+          }
+        }
+      } else {
+        // Fetch private messages between users, don't join a room
+        const sent = await Message.find({
+          $and: [{ user: this.id }, { chatTarget: this.chat.chatTarget }],
+        });
+
+        const received = await Message.find({
+          $and: [{ user: this.chat.chatTarget }, { chatTarget: this.id }],
+        });
+
+        messages = [...sent, ...received].sort((m1, m2) => (m1.time > m2.time ? 1 : -1));
       }
+      this.$store.commit('previousMessages', messages);
+    },
+    leaveRoom() {
+      this.$store.dispatch('leaveRoom');
+    },
+    displayIcon(type) {
+      if (type === 'location') {
+        return '<i class="material-icons">location_on</i>';
+      }
+      if (type === 'tag') {
+        return '<i class="material-icons">extension</i>';
+      }
+      if (type === 'private') {
+        return '<i class="material-icons">person</i>';
+      }
+      return '';
+    },
+    async getChats() {
+      let chats = await Message.find({ user: this.id });
+
+      chats.forEach((chat) => {
+        const found = this.chats.find((x) => x.target === chat.chatTarget);
+        if (found && found.type === chat.chatType) return;
+        this.chats.push({
+          target: chat.chatTarget,
+          type: chat.chatType,
+          time: chat.time,
+        });
+      });
+
+      // Look for other private chats started by another user
+
+      let privateChats = await Message.find({ chatTarget: this.id });
+
+      const set = new Set();
+      for (let privateChat of privateChats) {
+        set.add(privateChat.user);
+      }
+
+      if (set.size) {
+        set.forEach((chat) => {
+          const found = this.chats.find((x) => x.target === chat);
+          if (found) return;
+          let time = privateChats.filter((name) => name.user === chat);
+          time = privateChats[time.length - 1].time;
+          this.chats.push({
+            target: chat,
+            type: 'private',
+            time: time,
+          });
+        });
+      }
+
+      if (!this.chats.length && this.chat.chatTarget === '') {
+        this.fetchedChats = true;
+      } else {
+        this.fetchedChats = false;
+      }
+
+      this.getNames();
+      this.updateChats();
+    },
+    async updateChats() {
+      const messages = await Message.find();
+
+      for (let message of messages) {
+        let target;
+        if (message.chatType === 'private') {
+          if (message.user === this.id) {
+            target = message.chatTarget;
+          } else {
+            target = message.user;
+          }
+        } else {
+          target = message.chatTarget;
+        }
+        const time = message.time;
+        const index = this.chats.findIndex((i) => i.target === target);
+        if (this.chats[index].time < time) {
+          this.chats[index].time = time;
+        }
+      }
+      this.chats = this.chats.sort((m1, m2) => (m1.time > m2.time ? -1 : 1));
     },
   },
   watch: {
@@ -125,6 +246,10 @@ export default {
         this.$nextTick(() => {
           this.getNames();
           this.scrollDown();
+          this.timestamp = [];
+          if (!this.messages.length) {
+            this.getChats();
+          }
         });
       },
     },
@@ -174,5 +299,43 @@ div.chat-container div.self span.name {
 span.time {
   margin-bottom: 0.2rem;
   text-align: center;
+}
+.no-margin-padding {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+section.target div.target {
+  display: flex;
+  align-items: center;
+  width: 100vw;
+  height: 80px;
+  border-bottom: 1px solid #e4e4e4;
+  padding: 1rem;
+}
+div.icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #e4e4e4;
+  margin-right: 1rem;
+  display: grid;
+  place-items: center;
+  color: #fff;
+}
+.hide {
+  display: none;
+}
+section.no-chats {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 0 2rem;
+  text-align: center;
+}
+
+section.no-chats i {
+  color: #e4e4e4;
+  font-size: 5rem;
 }
 </style>

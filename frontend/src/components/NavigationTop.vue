@@ -21,12 +21,17 @@ export default {
     chatTarget() {
       return this.$store.state.chat.chatTarget;
     },
+    chatType() {
+      return this.$store.state.chat.chatType;
+    },
   },
   methods: {
     async leaveRoom() {
-      let res = await fetch(`/api/chat/leave/${this.chatTarget}?id=${this.id}`);
-      res = await res.json();
-      this.$store.commit('setChatTarget', false);
+      if (this.chatType === 'private') {
+        this.$store.commit('setChatTarget', false);
+      } else {
+        this.$store.dispatch('leaveRoom');
+      }
     },
   },
 };

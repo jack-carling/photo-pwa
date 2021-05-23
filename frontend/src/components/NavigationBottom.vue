@@ -30,9 +30,6 @@ export default {
     };
   },
   computed: {
-    username() {
-      return this.$store.state.user.name;
-    },
     id() {
       return this.$store.state.user._id;
     },
