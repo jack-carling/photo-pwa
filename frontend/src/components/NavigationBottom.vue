@@ -1,12 +1,9 @@
 <template>
   <main>
+    <Emoji v-if="showEmoji" @emoji="renderEmoji" />
     <div v-if="activeChat" class="chat">
-      <input
-        @keyup.enter="sendMessage"
-        v-model="message"
-        type="text"
-        placeholder="Aa"
-      />
+      <input @keyup.enter="sendMessage" v-model="message" ref="message" type="text" placeholder="Aa" />
+      <div><i class="material-icons" @click="toggleEmoji">emoji_emotions</i></div>
       <div><i class="material-icons" @click="sendMessage">send</i></div>
     </div>
     <div class="navigation" v-else>
@@ -17,42 +14,20 @@
         <i class="material-icons" @click="$router.push('/search')">search</i>
       </div>
       <div>
-        <i class="material-icons" @click="$router.push('/camera')"
-          >photo_camera</i
-        >
+        <i class="material-icons" @click="$router.push('/camera')">photo_camera</i>
       </div>
       <div>
-        <i class="material-icons" @click="$router.push('/chat')"
-          >question_answer</i
-        >
+        <i class="material-icons" @click="$router.push('/chat')">question_answer</i>
       </div>
       <div>
-        <i class="material-icons" @click="$router.push('/account')"
-          >account_circle</i
-        >
+        <i class="material-icons" @click="$router.push('/account')">account_circle</i>
       </div>
-    </div>
-    <div class="circle-backround">
-      <span class="material-icons" @click="$router.push('/camera')"
-        >photo_camera</span
-      >
-    </div>
-
-    <div>
-      <i class="material-icons" @click="$router.push('/chat')"
-        >question_answer</i
-      >
-    </div>
-    <div>
-      <i class="material-icons" @click="$router.push('/account')"
-        >account_circle</i
-      >
     </div>
   </main>
 </template>
 
 <script>
-import Emoji from "./Emoji.vue";
+import Emoji from './Emoji.vue';
 
 export default {
   components: {
@@ -60,7 +35,7 @@ export default {
   },
   data() {
     return {
-      message: "",
+      message: '',
       showEmoji: false,
     };
   },
@@ -69,7 +44,7 @@ export default {
       return this.$store.state.user._id;
     },
     activeChat() {
-      if (this.$route.path === "/chat" && this.chat.chatTarget !== "") {
+      if (this.$route.path === '/chat' && this.chat.chatTarget !== '') {
         return true;
       } else {
         return false;
@@ -81,28 +56,28 @@ export default {
   },
   methods: {
     async sendMessage() {
-      if (this.message === "") return;
+      if (this.message === '') return;
       let data = JSON.stringify({
         user: this.id,
         chatTarget: this.chat.chatTarget,
         message: this.message,
         chatType: this.chat.chatType,
       });
-      let res = await fetch("/api/chat/message", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      let res = await fetch('/api/chat/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: data,
       });
       res = await res.json();
       if (res.success) {
-        this.message = "";
+        this.message = '';
       }
     },
     toggleEmoji() {
       this.showEmoji = !this.showEmoji;
     },
     renderEmoji(emoji) {
-      this.message += emoji + " ";
+      this.message += emoji + ' ';
       this.$refs.message.focus();
     },
   },
@@ -140,8 +115,8 @@ div.navigation {
 }
 div.chat div,
 div.navigation div {
-  /*width: 50px;
-  height: 50px;*/
+  width: 50px;
+  height: 50px;
   display: grid;
   place-items: center;
   color: #eceff1;
@@ -158,23 +133,5 @@ input {
   height: initial !important;
   padding: 0.5rem 1rem !important;
   border-radius: 999px !important;
-}
-
-span {
-  font-size: 2rem;
-  color: #eceff1;
-  cursor: pointer;
-}
-
-.circle-backround {
-  height: 55px;
-  width: 55px;
-  background-color: #00acc1;
-  border-radius: 50%;
-  z-index: 99;
-  transform: translateY(-7px);
-  margin-bottom: 0;
-  box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.2),
-    0 17px 50px 0 rgba(0, 0, 0, 0.18);
 }
 </style>
