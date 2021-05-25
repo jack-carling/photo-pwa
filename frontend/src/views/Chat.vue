@@ -81,7 +81,7 @@ export default {
   methods: {
     scrollDown() {
       this.$refs.area.scrollTo({
-        top: this.$refs.area.scrollHeight,
+        top: this.$refs.area.scrollHeight + 1000,
         behavior: this.scrollBehavior,
       });
     },
@@ -252,10 +252,11 @@ export default {
       handler() {
         this.$nextTick(() => {
           this.getNames();
-          this.scrollDown();
           this.timestamp = [];
           if (!this.messages.length) {
             this.getChats();
+          } else {
+            this.scrollDown();
           }
           if (this.chat.chatTarget === '') {
             this.scrollBehavior = 'auto';

@@ -1,32 +1,42 @@
 <template>
-  <div v-if="activeChat" class="chat">
-    <input @keyup.enter="sendMessage" v-model="message" type="text" placeholder="Aa" />
-    <div><i class="material-icons" @click="sendMessage">send</i></div>
-  </div>
-  <div class="navigation" v-else>
-    <div>
-      <i class="material-icons" @click="$router.push('/')">home</i>
+  <main>
+    <Emoji v-if="showEmoji" @emoji="renderEmoji" />
+    <div v-if="activeChat" class="chat">
+      <input @keyup.enter="sendMessage" v-model="message" ref="message" type="text" placeholder="Aa" />
+      <div><i class="material-icons" @click="toggleEmoji">emoji_emotions</i></div>
+      <div><i class="material-icons" @click="sendMessage">send</i></div>
     </div>
-    <div>
-      <i class="material-icons" @click="$router.push('/search')">search</i>
+    <div class="navigation" v-else>
+      <div>
+        <i class="material-icons" @click="$router.push('/')">home</i>
+      </div>
+      <div>
+        <i class="material-icons" @click="$router.push('/search')">search</i>
+      </div>
+      <div>
+        <i class="material-icons" @click="$router.push('/camera')">photo_camera</i>
+      </div>
+      <div>
+        <i class="material-icons" @click="$router.push('/chat')">question_answer</i>
+      </div>
+      <div>
+        <i class="material-icons" @click="$router.push('/account')">account_circle</i>
+      </div>
     </div>
-    <div>
-      <i class="material-icons" @click="$router.push('/camera')">photo_camera</i>
-    </div>
-    <div>
-      <i class="material-icons" @click="$router.push('/chat')">question_answer</i>
-    </div>
-    <div>
-      <i class="material-icons" @click="$router.push('/account')">account_circle</i>
-    </div>
-  </div>
+  </main>
 </template>
 
 <script>
+import Emoji from './Emoji.vue';
+
 export default {
+  components: {
+    Emoji,
+  },
   data() {
     return {
       message: '',
+      showEmoji: false,
     };
   },
   computed: {
@@ -61,6 +71,25 @@ export default {
       res = await res.json();
       if (res.success) {
         this.message = '';
+      }
+    },
+    toggleEmoji() {
+      this.showEmoji = !this.showEmoji;
+    },
+    renderEmoji(emoji) {
+      this.message += emoji + ' ';
+      this.$refs.message.focus();
+    },
+  },
+  watch: {
+    activeChat() {
+      if (!this.activeChat) {
+        this.showEmoji = false;
+      }
+      if (this.activeChat) {
+        this.$nextTick(() => {
+          this.$refs.message.focus();
+        });
       }
     },
   },

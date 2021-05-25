@@ -150,7 +150,7 @@ export default {
       this.getLocation();
     },
     toggleFacingMode() {
-      this.facingMode = this.facingMode === 'user' ? { exact: 'environment' } : 'user';
+      this.facingMode = this.facingMode === 'user' ? 'environment' : 'user';
     },
     confirmUpload() {
       if (!this.online) {
