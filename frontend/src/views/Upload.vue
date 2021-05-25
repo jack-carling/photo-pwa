@@ -53,6 +53,10 @@
       {{ error }}
     </p>
     <button class="btn waves-effect waves-light cyan darken-1" @click="upload" :disabled="pending">Upload</button>
+    <button class="btn waves-effect waves-light cyan darken-1 camera" v-if="uploaded">
+      <i class="material-icons left">photo_camera</i>
+      Back
+    </button>
     <template v-if="pending">
       <div class="progress cyan darken-1" v-if="!uploaded">
         <div class="indeterminate blue-grey"></div>
@@ -252,5 +256,8 @@ section.tags i {
   font-size: 16px;
   line-height: 32px;
   padding-left: 8px;
+}
+button.camera {
+  margin-left: 1rem;
 }
 </style>

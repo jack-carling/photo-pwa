@@ -239,7 +239,8 @@ export default {
         }
         const time = message.time;
         const index = this.chats.findIndex((i) => i.target === target);
-        if (this.chats[index].time < time) {
+        const previousTime = this.chats[index]?.time;
+        if (previousTime && previousTime < time) {
           this.chats[index].time = time;
         }
       }

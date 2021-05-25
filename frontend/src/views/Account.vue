@@ -36,6 +36,10 @@
         <input id="password" type="password" v-model="password" @keyup.enter="register" />
         <label for="password">Password</label>
       </div>
+      <div class="input-field">
+        <input id="confirm-password" type="password" v-model="confirmPassword" @keyup.enter="register" />
+        <label for="confirm-password">Confirm Password</label>
+      </div>
       <p class="error" v-if="registerError">
         <i class="material-icons">error</i>
         {{ registerError }}
@@ -62,6 +66,7 @@ export default {
       name: '',
       email: '',
       password: '',
+      confirmPassword: '',
       loginPage: true,
       registerError: '',
       redirect: false,
@@ -93,6 +98,10 @@ export default {
       const passwordTest = testPassword(this.password);
       if (passwordTest) {
         this.registerError = passwordTest;
+        return;
+      }
+      if (this.password !== this.confirmPassword) {
+        this.registerError = 'Passwords need to match.';
         return;
       }
       let user = new User({
@@ -127,6 +136,8 @@ export default {
       this.name = '';
       this.email = '';
       this.password = '';
+      this.confirmPassword = '';
+      this.redirect = '';
       this.$store.commit('clearErrors');
       const labels = document.querySelectorAll('label');
       labels.forEach((label) => label.classList.remove('active'));

@@ -3,6 +3,8 @@ import { createStore } from 'vuex';
 import mongoosy from 'mongoosy/frontend';
 const { Login } = mongoosy;
 
+let SSE;
+
 const store = createStore({
   state: {
     user: {
@@ -58,8 +60,8 @@ const store = createStore({
   },
   actions: {
     startChat({ commit, state }) {
-      let sse = new EventSource(`/api/chat?id=${state.user._id}`);
-      sse.onmessage = (event) => {
+      SSE = new EventSource(`/api/chat?id=${state.user._id}`);
+      SSE.onmessage = (event) => {
         let message = JSON.parse(event.data);
         if (message.initial) return;
         commit('pushMessage', message);
@@ -83,6 +85,7 @@ const store = createStore({
       }
     },
     async logout({ state }) {
+      if (SSE) SSE.close();
       await Login.logout();
       for (const property of Object.getOwnPropertyNames(state.user)) {
         delete state.user[property];
@@ -91,10 +94,6 @@ const store = createStore({
     },
     async leaveRoom({ commit, state }) {
       if (state.chat.chatTarget !== '' && state.chat.chatType !== 'private') {
-        /*let extraQuery = '';
-        if (state.chat.chatType === 'location' || state.chat.chatType === 'tag') {
-          extraQuery = `&type=${state.chat.chatType}`;
-        }*/
         let res = await fetch(
           `/api/chat/leave/${state.chat.chatTarget}?id=${state.user.id}&type=${state.chat.chatType}`
         );
