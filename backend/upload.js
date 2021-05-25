@@ -1,4 +1,5 @@
 const formidable = require('formidable');
+const path = require('path');
 
 module.exports = (app) => {
   app.post('/api/upload', (req, res) => {
@@ -12,7 +13,7 @@ module.exports = (app) => {
         return;
       }
 
-      let fileName = files.file.path.split('/');
+      let fileName = files.file.path.split(path.sep);
       fileName = fileName[fileName.length - 1];
       console.log('File uploaded:', fileName);
 
