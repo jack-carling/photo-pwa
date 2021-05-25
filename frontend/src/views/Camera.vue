@@ -145,7 +145,7 @@ export default {
 
       context.scale(-1, 1);
       context.drawImage(media, sx, sy, mWidth, mHeight);
-      this.photo = canvas.toDataURL('image/jpeg', 0.8);
+      this.photo = canvas.toDataURL();
       this.captured = true;
       this.getLocation();
     },

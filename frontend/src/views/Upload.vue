@@ -53,7 +53,7 @@
       {{ error }}
     </p>
     <button class="btn waves-effect waves-light cyan darken-1" @click="upload" :disabled="pending">Upload</button>
-    <button class="btn waves-effect waves-light cyan darken-1 camera" v-if="uploaded">
+    <button class="btn waves-effect waves-light cyan darken-1 camera" v-if="uploaded" @click="$router.push('/camera')">
       <i class="material-icons left">photo_camera</i>
       Back
     </button>
@@ -71,6 +71,7 @@
 
 <script>
 import { dataURItoBlob } from '../services/blob.js';
+import { scale } from '../services/scale.js';
 
 import mongoosy from 'mongoosy/frontend';
 const { Upload } = mongoosy;
@@ -125,6 +126,10 @@ export default {
       this.pending = true;
 
       let file = this.$store.state.photo.data;
+
+      const [maxWidth, maxHeight] = [1000, 1000];
+      const quality = 0.8;
+      file = await scale(file, maxWidth, maxHeight, quality);
       file = dataURItoBlob(file);
 
       const data = new FormData();
