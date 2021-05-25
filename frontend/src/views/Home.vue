@@ -1,6 +1,6 @@
 <template>
   <div class="main-container">
-    <section class="hero-banner">
+    <section v-show="!online" class="hero-banner">
       <img
         class="homepage-hero"
         src="../assets/homepage-hero-gradient.png"
@@ -105,11 +105,15 @@ export default {
       return this.$store.state.user.online;
     },
   },
-
   async mounted() {
     const uploads = await Upload.find();
     this.uploads = uploads;
   },
+  created() {
+    if (this.online) {
+
+    }
+  }
 };
 </script>
 
