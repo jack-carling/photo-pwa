@@ -15,7 +15,7 @@
         <input id="password" type="password" v-model="password" @keyup.enter="login" />
         <label for="password">Password</label>
       </div>
-      <p class="error" v-if="error">
+      <p class="error animate__animated animate__headShake" v-if="error">
         <i class="material-icons">error</i>
         Email or password is incorrect.
       </p>
@@ -40,7 +40,7 @@
         <input id="confirm-password" type="password" v-model="confirmPassword" @keyup.enter="register" />
         <label for="confirm-password">Confirm Password</label>
       </div>
-      <p class="error" v-if="registerError">
+      <p class="error animate__animated animate__headShake" v-if="registerError">
         <i class="material-icons">error</i>
         {{ registerError }}
       </p>
@@ -85,6 +85,7 @@ export default {
   },
   methods: {
     async register() {
+      this.wiggleErrors();
       const nameTest = testName(this.name);
       if (nameTest) {
         this.registerError = nameTest;
@@ -128,9 +129,18 @@ export default {
     async login() {
       const payload = { email: this.email, password: this.password };
       this.$store.dispatch('login', payload);
+      this.wiggleErrors();
     },
     async logout() {
       this.$store.dispatch('logout');
+    },
+    wiggleErrors() {
+      const error = document.querySelector('.error');
+      if (error) {
+        error.classList.remove('animate__headShake');
+        void error.offsetWidth; // Hack to restart CSS animation
+        error.classList.add('animate__headShake');
+      }
     },
     clear() {
       this.name = '';
