@@ -1,5 +1,5 @@
 <template>
-  <div class="main cyan darken-1">
+  <div class="main cyan darken-1" :class="{ border: chat }">
     <div v-if="chat" @click="leaveRoom">
       <i class="material-icons">arrow_back</i>
     </div>
@@ -24,6 +24,13 @@ export default {
     chatType() {
       return this.$store.state.chat.chatType;
     },
+    search() {
+      if (this.$route.path === '/search') {
+        return true;
+      } else {
+        return false;
+      }
+    },
   },
   methods: {
     async leaveRoom() {
@@ -43,6 +50,8 @@ div.main {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+.border {
   border-bottom: 1px solid #fff;
 }
 div.main div {
