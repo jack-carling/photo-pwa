@@ -13,7 +13,6 @@
     <section v-else>
       <div v-for="(message, index) in messages" :key="index" class="chat-container">
         <span class="time animate__animated animate__fadeInDown">{{ displayTime(message.time, index) }}</span>
-        <!-- <div class="animate__animated" :class="{ "['self', 'animate__fadeInRight']": checkSelf(message) }"> -->
         <div
           class="animate__animated"
           :class="[checkSelf(message) ? 'self animate__fadeInRight' : 'animate__fadeInLeft']"
@@ -224,7 +223,9 @@ export default {
       this.updateChats();
     },
     async updateChats() {
-      const messages = await Message.find();
+      const messages = await Message.find({
+        $or: [{ user: this.id }, { chatTarget: this.id }],
+      });
 
       for (let message of messages) {
         let target;
@@ -272,16 +273,6 @@ export default {
     this.leaveRoom();
   },
 };
-
-/*scrollBehavior() {
-      setTimeout(() => {
-        if (this.chat.chatTarget === '') {
-          return 'auto';
-        } else {
-          return 'smooth';
-        }
-      }, 500);
-    }, */
 </script>
 
 <style scoped>
@@ -359,7 +350,6 @@ section.no-chats {
   padding: 0 2rem;
   text-align: center;
 }
-
 section.no-chats i {
   color: #e4e4e4;
   font-size: 5rem;
