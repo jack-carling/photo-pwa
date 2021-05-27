@@ -17,6 +17,7 @@ const store = createStore({
     photoSettings: {},
     size: '',
     chat: { chatTarget: '', chatType: '' },
+    image: {},
   },
   mutations: {
     pushMessage(state, message) {
@@ -31,7 +32,7 @@ const store = createStore({
         state.chat.chatTarget = '';
         state.chat.chatType = '';
       } else {
-        state.chat.chatTarget = payload.room;
+        state.chat.chatTarget = payload.room.toLowerCase();
         state.chat.chatType = payload.type;
       }
     },
@@ -56,6 +57,10 @@ const store = createStore({
     },
     saveSize(state, size) {
       state.size = size;
+    },
+    setResultImage(state, image) {
+      state.image = {};
+      state.image = { ...image };
     },
   },
   actions: {

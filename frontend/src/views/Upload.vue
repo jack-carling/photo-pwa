@@ -103,7 +103,8 @@ export default {
   },
   methods: {
     addTag() {
-      const input = this.inputTags.split(' ');
+      let input = this.inputTags.toLowerCase();
+      input = input.split(' ');
       input.forEach((tag) => {
         if (!this.tags.includes(tag) && tag !== '') {
           this.tags.push(tag);
