@@ -81,11 +81,15 @@
        -->
     </section>
     <section class="images">
-      <img
+      <img 
+        class="home-grid"
         :src="upload.url"
         v-for="(upload, index) in uploads"
         v-bind:key="index"
       />
+      <div class="user-name">
+        <p></p>
+      </div>
     </section>
   </div>
 </template>
@@ -108,11 +112,6 @@ export default {
   async mounted() {
     const uploads = await Upload.find();
     this.uploads = uploads;
-  },
-  created() {
-    if (this.online) {
-
-    }
   }
 };
 </script>
@@ -121,7 +120,6 @@ export default {
 
 <style scoped>
 * {
-  overflow: hidden;
   box-sizing: border-box;
 }
 
@@ -135,6 +133,7 @@ section.images {
   margin: 1rem;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: auto;
   max-width: 100%;
   gap: 1%;
   object-fit: cover;
@@ -201,9 +200,19 @@ form {
   margin-bottom: 3rem;
 }
 
-img {
+.home-grid {
+  position: relative;
   width: 100%;
+  height: 100%;
   object-fit: fill;
+}
+
+.user-name {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  width: 50px;
+  height: 50px;
 }
 
 .row {
