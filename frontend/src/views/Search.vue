@@ -60,6 +60,13 @@ export default {
       return this.$store.state.user.name;
     },
   },
+  mounted() {
+    const query = this.$route.query?.q;
+    if (query) {
+      this.input = query;
+      this.search();
+    }
+  },
   methods: {
     clearInput() {
       this.input = '';

@@ -104,7 +104,7 @@ div.chat,
 div.navigation {
   height: 50px;
   background-color: #00acc1;
-  border-top: 1px solid #fff;
+  border-top: 2px solid #fff;
 }
 div.chat {
   display: flex;

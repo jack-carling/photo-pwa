@@ -1,88 +1,43 @@
 <template>
   <main>
     <section v-if="!online" class="hero-banner">
-      <img class="homepage-hero" src="../assets/homepage-hero-gradient.png" alt="homepage-hero" />
-      <form>
-        <div class="input-field">
-          <input id="search" type="search" required placeholder="Search for tags, locations and people" />
-          <label class="label-icon" for="search"
-            ><i class="material-icons" @click="$router.push('/search')">search</i></label
-          >
-        </div>
-      </form>
+      <div class="search">
+        <input
+          type="text"
+          @keyup.enter="search"
+          v-model="input"
+          autocomplete="off"
+          placeholder="Search for tags, locations and people"
+        />
+        <i class="material-icons" @click="search">search</i>
+      </div>
       <div class="homepage-elements">
-        <img class="dark-logo" src="../assets/Apperture_dark_logo.svg" />
+        <img src="../assets/logo_dark.svg" />
         <a class="waves-effect waves-light cyan darken-1 btn" @click="$router.push('/account')">Login</a>
         <a class="waves-effect waves-light cyan darken-1 btn" @click="$router.push('/account?redirect=signup')"
           >Sign up</a
         >
       </div>
-      <!-- 
-      <div class="container" style="overflow: hidden">
-        <div class="row">
-          <div class="col s6 m6 14">
-            <img
-              class="image_1"
-              src="../assets/pexels-jaime-reimer-2662086.jpg"
-            />
-          </div>
-          <div class="col s6 m6 14" style="overflow: hidden">
-            <img
-              class="image_2"
-              src="../assets/pexels-alexandr-podvalny-2070485.jpg"
-            />
-          </div>
-          <div class="col s12 m6 14">
-            <img
-              class="image_3"
-              src="../assets/pexels-jimmy-teoh-1010657.jpg"
-            />
-          </div>
-          <div class="col s6 m6 14">
-            <img
-              class="image_4"
-              src="../assets/pexels-david-bartus-586687.jpg"
-            />
-          </div>
-          <div class="col s6 m6 14">
-            <img class="image_5" src="../assets/pexels-belle-co-345750.jpg" />
-          </div>
-          <div class="col s12 m6 14">
-            <img
-              class="image_6"
-              src="../assets/pexels-nina-uhlíková-287240.jpg"
-            />
-          </div>
-          <div class="col s12 m6 14">
-            <img
-              class="image_6"
-              src="../assets/pexels-esrageziyor-7472287.jpg"
-            />
-          </div>
-        </div>
-      </div>
-       -->
     </section>
 
-    <section class="feed" ref="feed">
+    <section class="feed animate__animated animate__slideInUp" ref="feed">
       <div class="images" v-for="(upload, i) in uploads" v-bind:key="i" @click="handleImage(upload)">
         <img :src="upload.url" class="render" />
         <div class="chip">
           <span>{{ displayName(upload.user) }}</span>
           <i class="material-icons">person</i>
         </div>
-        <!-- <div class="info">
-          <span>sara</span>
-          <i class="material-icons">question_answer</i>
-        </div> -->
-        <!-- <p class="user-name" @click="$router.push('/account')">
-          {{ profile.name }}
-        </p>
-        <div class="chat-bubble" @click="$router.push('/chat')">
-          <i class="tiny material-icons">question_answer</i>
-        </div> -->
       </div>
     </section>
+    <footer ref="footer">
+      <div v-if="!fetchedAll">
+        <img v-show="loading" src="../assets/loader.gif" alt="" />
+      </div>
+      <div class="footer-message" v-else>
+        <i class="material-icons">check_circle</i>
+        <span>You're up to date!</span>
+      </div>
+    </footer>
   </main>
 </template>
 
@@ -95,6 +50,13 @@ export default {
     return {
       uploads: [],
       names: [],
+      input: '',
+      maxLoad: 6,
+      uploadCount: 0,
+      fetchedAll: false,
+      page: 1,
+      observer: null,
+      loading: false,
     };
   },
   created() {
@@ -112,10 +74,41 @@ export default {
     },
   },
   async mounted() {
-    const uploads = await Upload.find();
-    this.uploads = uploads.reverse();
+    const count = await Upload.countDocuments();
+    this.uploadCount = count;
+
+    this.getData();
+
+    setTimeout(() => {
+      this.observer = new IntersectionObserver(([entry]) => {
+        if (entry && entry.isIntersecting) {
+          this.loading = true;
+          this.getData();
+        }
+      });
+
+      this.observer.observe(this.$refs.footer);
+    }, 1000);
   },
   methods: {
+    async getData() {
+      if (this.uploadCount === this.uploads.length) {
+        this.fetchedAll = true;
+        return;
+      }
+      const numersToSkip = this.maxLoad * (this.page - 1);
+      const uploads = await Upload.find().sort({ time: -1 }).skip(numersToSkip).limit(this.maxLoad);
+
+      this.uploads = [...this.uploads, ...uploads];
+
+      this.getNames();
+      this.page++;
+      this.loading = false;
+    },
+    search() {
+      const search = `/search?q=${this.input}`;
+      this.$router.push(search);
+    },
     handleImage(image) {
       this.$store.commit('setResultImage', image);
       this.$router.push('/result');
@@ -142,18 +135,20 @@ export default {
 
       for (let i = 0; i < this.uploads.length; i++) {
         const user = this.uploads[i].user;
-        const { name } = names.find((name) => name._id === user);
+        const name = names.find((name) => name._id === user);
 
         const found = this.names.find((x) => x.user === user);
         if (found) continue;
 
-        this.names.push({ name, user });
+        this.names.push({ name: name?.name, user });
       }
     },
     displayName(target) {
-      if (this.names.length) {
-        let { name } = this.names.find((x) => x.user === target);
-        return name;
+      let name = this.names.find((x) => x.user === target);
+      if (name?.name) {
+        return name.name;
+      } else {
+        return '';
       }
     },
   },
@@ -161,7 +156,6 @@ export default {
     uploadsRendered() {
       if (this.uploadsRendered) {
         this.resizeImages();
-        this.getNames();
       }
     },
   },
@@ -201,119 +195,72 @@ div.chip i {
   line-height: 32px;
   padding-left: 8px;
 }
-
-/* div.images div {
-  height: 35px;
-  background-color: #bbdefb;
-  padding: 0 0.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-div.images i {
-  color: #607d8b;
-  font-size: 16px;
-} */
-
-/* Previous */
-
-.dark-logo {
-  max-width: 140%;
-  margin-bottom: 2px;
-}
-
-.hero-banner {
-  position: sticky;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  margin-bottom: 1.4rem;
-}
-
-.homepage-hero {
-  position: absolute;
-  left: -1.3rem;
-  top: 0px;
-  z-index: -1;
-  overflow: hidden;
-  width: 110%;
-}
-
-form {
-  width: 90%;
-}
-
-.input-field {
+section.hero-banner {
+  height: 90%;
+  width: 100vw;
   position: relative;
+  background: linear-gradient(0deg, rgba(255, 255, 255, 1) 0%, rgba(0, 0, 0, 0) 20%),
+    url('../assets/background.png') no-repeat center center;
+  background-size: cover;
 }
-
-.input-field > label {
-  color: #ffffff;
-  font-size: 1rem;
-  cursor: text;
-  text-align: center;
+.animate__animated {
+  --animate-duration: 1s;
 }
-
-#search {
-  padding-left: 0.7rem;
-  width: 95%;
-  background: #00acc1;
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.15);
-  border-radius: 0.5rem;
-}
-
-.label-icon {
-  margin-left: 87%;
-  margin-top: 0.8rem;
-}
-
-.homepage-elements {
-  margin-top: 95%;
-  height: 9rem;
+div.homepage-elements {
+  position: absolute;
+  width: 100%;
+  bottom: 3rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 3rem;
 }
-
-/* .user-name {
-  display: flex;
-  flex-direction: row;
-  align-self: center;
-  position: absolute;
-  z-index: 99;
-  align-items: center;
-  top: 86%;
-  width: 100.5%;
-  height: 16%;
-  background: #bbdefb;
-  padding: 6%;
-  font-size: 0.6rem;
-  font-weight: 700;
-  text-align: center;
-  border: 2px solid #bbdefb;
-  color: #607d8b;
-} */
-
-/* .chat-bubble {
-  align-self: center;
-  position: absolute;
-  z-index: 99;
-  left: 80%;
-  bottom: -6%;
-  padding: 0.5%;
-  color: #607d8b;
-} */
-
-.row {
-  margin-top: 10%;
-}
-
 .btn {
   width: 150px;
-  height: 60px;
   margin-top: 0.8rem;
+}
+div.search {
+  display: flex;
+  align-items: center;
+  width: calc(100% - 2rem);
+  top: 2rem;
+  left: 1rem;
+  position: absolute;
+  background-color: #00acc1 !important;
+  border-radius: 5px !important;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.15);
+}
+div.search i {
+  margin-right: 1rem;
+  color: #eceff1;
+}
+input,
+input:focus {
+  margin: 0 !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+input {
+  background-color: transparent !important;
+  color: #eceff1;
+  width: 100% !important;
+  height: initial !important;
+  padding: 1rem 0.5rem 1rem 1rem !important;
+}
+footer {
+  height: 50px;
+  display: grid;
+  place-items: center;
+}
+footer img {
+  height: 25px;
+}
+div.footer-message {
+  display: flex;
+  align-items: center;
+}
+div.footer-message i {
+  color: #ccc;
+  margin-right: 0.5rem;
+  font-size: 16px;
 }
 </style>

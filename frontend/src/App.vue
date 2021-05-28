@@ -43,6 +43,9 @@ main.app {
   grid-template-rows: min-content auto min-content;
   height: 100vh;
 }
+.input-field input {
+  line-height: 0;
+}
 .input-field input[type='text']:focus,
 .input-field input[type='email']:focus,
 .input-field input[type='password']:focus {

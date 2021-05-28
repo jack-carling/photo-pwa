@@ -362,18 +362,20 @@ div.chat-container {
 }
 div.chat-container div {
   word-wrap: break-word;
-  color: #eceff1;
-  background-color: #607d8b;
+  background-color: #bbdefb;
+  color: #424242;
   width: max-content;
   font-size: 1.2rem;
   max-width: 80%;
   padding: 0.5rem 1rem;
   border-radius: 10px;
   position: relative;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.15);
 }
 div.chat-container div.self {
   align-self: flex-end;
   background-color: #00acc1;
+  color: #eceff1;
 }
 div.chat-container:last-of-type {
   margin-bottom: 0.5rem;

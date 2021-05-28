@@ -1,10 +1,10 @@
 <template>
-  <div class="main cyan darken-1" :class="{ border: chat }">
+  <div class="main cyan darken-1" :class="{ border: !search }">
     <div v-if="chat" @click="leaveRoom">
       <i class="material-icons">arrow_back</i>
     </div>
     <div v-else></div>
-    <img @click="$router.push('/')" src="../assets/Apperture_white_logo.svg" alt="" />
+    <img @click="$router.push('/')" src="../assets/logo_white.svg" alt="" />
   </div>
 </template>
 
@@ -52,7 +52,7 @@ div.main {
   align-items: center;
 }
 .border {
-  border-bottom: 1px solid #fff;
+  border-bottom: 2px solid #fff;
 }
 div.main div {
   width: 50px;
