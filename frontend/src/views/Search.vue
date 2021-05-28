@@ -21,7 +21,7 @@
       </li>
       <li v-for="(result, i) in results" :key="i" @click="handleResult(result)">
         <div class="icon" v-html="displayIcon(result)"></div>
-        {{ result.name }}
+        <span>{{ result.name }}</span>
       </li>
     </ul>
 
@@ -93,6 +93,8 @@ export default {
 
       for (let i = 0; i < uploads.length; i++) {
         if (q.test(uploads[i].location)) {
+          // You cannot find pictures that has hidden their location by searching for hide
+          if (uploads[i].location === 'hide') break;
           const found = results.find((x) => {
             return x.name === uploads[i].location.toLowerCase();
           });
@@ -196,6 +198,7 @@ input {
   background-color: #eceff1 !important;
   height: initial !important;
   padding: 0.5rem 1rem !important;
+  padding-right: 2.5rem !important;
   border-radius: 999px !important;
 }
 section div.icon {
@@ -215,8 +218,13 @@ li {
   border-bottom: 1px solid #eceff1;
   display: flex;
   align-items: center;
+  width: 100%;
 }
-
+li span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 li div.icon {
   margin-right: 1rem;
   color: #ccc;

@@ -44,7 +44,7 @@
     </div>
     <section class="tags">
       <div class="chip" v-for="(tag, i) in tags" :key="i">
-        {{ tag }}
+        <span>{{ tag }}</span>
         <i class="material-icons" @click="deleteTag(i)">close</i>
       </div>
     </section>

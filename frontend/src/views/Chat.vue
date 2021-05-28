@@ -178,7 +178,6 @@ export default {
         }
 
         this.images = data;
-        console.log(this.images);
       }
     },
     async joinRoom(room, type) {
@@ -406,10 +405,6 @@ section.target div.target {
   border-bottom: 1px solid #e4e4e4;
   padding: 1rem;
 }
-div.target article {
-  display: flex;
-  align-items: center;
-}
 div.icon {
   width: 50px;
   height: 50px;
@@ -440,5 +435,18 @@ div.icon >>> img.render {
   height: 50px;
   object-fit: cover;
   border-radius: 50%;
+}
+div.target article {
+  display: grid;
+  align-items: center;
+  width: 100%;
+  grid-template-columns: min-content 1fr;
+  overflow: hidden;
+}
+article span {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 </style>

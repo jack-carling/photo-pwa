@@ -49,4 +49,18 @@ main.app {
   border-bottom: 1px solid #00acc1 !important;
   box-shadow: 0 1px 0 0 #00acc1 !important;
 }
+div.chip {
+  display: inline-flex;
+  max-width: 50vw;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+div.chip span {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+div.chip i {
+  flex: 1;
+}
 </style>

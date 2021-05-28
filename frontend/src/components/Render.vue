@@ -24,8 +24,10 @@ export default {
     resizeImages() {
       this.$nextTick(() => {
         const img = document.querySelector('.render');
-        const size = img.offsetWidth + 'px';
-        this.$refs.main.style.setProperty('grid-auto-rows', size);
+        if (img) {
+          const size = img.offsetWidth + 'px';
+          this.$refs.main.style.setProperty('grid-auto-rows', size);
+        }
       });
     },
     handleImage(image) {

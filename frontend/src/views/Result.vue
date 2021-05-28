@@ -7,12 +7,12 @@
       </div>
     </section>
     <div>
-      <span>
+      <span class="info">
         <i class="material-icons">account_circle</i>
         Info
       </span>
       <div class="chip" @click="startChat(id, 'private')">
-        {{ name }}
+        <span>{{ name }}</span>
         <i class="material-icons">question_answer</i>
       </div>
       <div class="chip">
@@ -21,23 +21,23 @@
       </div>
 
       <section class="info" v-if="location">
-        <span>
+        <span class="info">
           <i class="material-icons">location_on</i>
           Location
         </span>
         <div class="chip" @click="startChat(location, 'location')">
-          {{ location }}
+          <span>{{ location }}</span>
           <i class="material-icons">question_answer</i>
         </div>
       </section>
 
       <section class="info" v-if="tags.length">
-        <span>
+        <span class="info">
           <i class="material-icons">extension</i>
           Tags
         </span>
         <div class="chip" v-for="(tag, i) in tags" :key="i" @click="startChat(tag, 'tag')">
-          {{ tag }}
+          <span>{{ tag }}</span>
           <i class="material-icons">question_answer</i>
         </div>
       </section>
@@ -105,7 +105,7 @@ div.chip i {
   line-height: 32px;
   padding-left: 8px;
 }
-span {
+span.info {
   display: block;
   border-bottom: 1px solid #eceff1;
   margin-bottom: 1rem;
@@ -116,7 +116,7 @@ span {
 section.info {
   padding-top: 1rem;
 }
-span i {
+span.info i {
   font-size: 16px;
   margin-right: 0.3rem;
   color: #5b5b5b;
