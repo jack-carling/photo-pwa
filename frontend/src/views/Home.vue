@@ -1,36 +1,19 @@
 <template>
-  <div class="main-container">
-    <section v-show="!online" class="hero-banner">
-      <img
-        class="homepage-hero"
-        src="../assets/homepage-hero-gradient.png"
-        alt="homepage-hero"
-      />
+  <main>
+    <section v-if="!online" class="hero-banner">
+      <img class="homepage-hero" src="../assets/homepage-hero-gradient.png" alt="homepage-hero" />
       <form>
         <div class="input-field">
-          <input
-            id="search"
-            type="search"
-            required
-            placeholder="Search for tags, locations and people"
-          />
+          <input id="search" type="search" required placeholder="Search for tags, locations and people" />
           <label class="label-icon" for="search"
-            ><i class="material-icons" @click="$router.push('/search')"
-              >search</i
-            ></label
+            ><i class="material-icons" @click="$router.push('/search')">search</i></label
           >
         </div>
       </form>
       <div class="homepage-elements">
         <img class="dark-logo" src="../assets/Apperture_dark_logo.svg" />
-        <a
-          class="waves-effect waves-light cyan darken-1 btn"
-          @click="$router.push('/account')"
-          >Login</a
-        >
-        <a
-          class="waves-effect waves-light cyan darken-1 btn"
-          @click="$router.push('/account?redirect=signup')"
+        <a class="waves-effect waves-light cyan darken-1 btn" @click="$router.push('/account')">Login</a>
+        <a class="waves-effect waves-light cyan darken-1 btn" @click="$router.push('/account?redirect=signup')"
           >Sign up</a
         >
       </div>
@@ -80,69 +63,159 @@
       </div>
        -->
     </section>
-    <div class="feed">
-      <section class="images" v-for="upload in uploads" v-bind:key="upload">
-        <img :src="upload.url" class="home-grid" />
-        <p class="user-name" @click="$router.push('/account')">
+
+    <section class="feed" ref="feed">
+      <div class="images" v-for="(upload, i) in uploads" v-bind:key="i" @click="handleImage(upload)">
+        <img :src="upload.url" class="render" />
+        <div class="chip">
+          <span>{{ displayName(upload.user) }}</span>
+          <i class="material-icons">person</i>
+        </div>
+        <!-- <div class="info">
+          <span>sara</span>
+          <i class="material-icons">question_answer</i>
+        </div> -->
+        <!-- <p class="user-name" @click="$router.push('/account')">
           {{ profile.name }}
         </p>
         <div class="chat-bubble" @click="$router.push('/chat')">
           <i class="tiny material-icons">question_answer</i>
-        </div>
-      </section>
-    </div>
-  </div>
+        </div> -->
+      </div>
+    </section>
+  </main>
 </template>
-  
+
 <script>
-import mongoosy from "mongoosy/frontend";
-const { Upload } = mongoosy;
+import mongoosy from 'mongoosy/frontend';
+const { Upload, User } = mongoosy;
 
 export default {
   data() {
     return {
       uploads: [],
+      names: [],
     };
+  },
+  created() {
+    window.addEventListener('resize', this.resizeImages);
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.resizeImages);
   },
   computed: {
     online() {
       return this.$store.state.user.online;
     },
-    profile() {
-      return this.$store.state.user;
+    uploadsRendered() {
+      return this.uploads.length;
     },
   },
   async mounted() {
     const uploads = await Upload.find();
-    this.uploads = uploads;
+    this.uploads = uploads.reverse();
+  },
+  methods: {
+    handleImage(image) {
+      this.$store.commit('setResultImage', image);
+      this.$router.push('/result');
+    },
+    resizeImages() {
+      this.$nextTick(() => {
+        const img = document.querySelector('.render');
+        if (img) {
+          const size = img.offsetWidth + 'px';
+          this.$refs.feed.style.setProperty('grid-auto-rows', size);
+        }
+      });
+    },
+    async getNames() {
+      let users = [];
+      for (let upload of this.uploads) {
+        users.push(upload.user);
+      }
+
+      const set = new Set(users);
+      users = Array.from(set);
+
+      let names = await User.find({ _id: { $in: users } });
+
+      for (let i = 0; i < this.uploads.length; i++) {
+        const user = this.uploads[i].user;
+        const { name } = names.find((name) => name._id === user);
+
+        const found = this.names.find((x) => x.user === user);
+        if (found) continue;
+
+        this.names.push({ name, user });
+      }
+    },
+    displayName(target) {
+      if (this.names.length) {
+        let { name } = this.names.find((x) => x.user === target);
+        return name;
+      }
+    },
+  },
+  watch: {
+    uploadsRendered() {
+      if (this.uploadsRendered) {
+        this.resizeImages();
+        this.getNames();
+      }
+    },
   },
 };
 </script>
 
 <style scoped>
-* {
-  box-sizing: border-box;
-}
-
 #router {
   margin: 0;
   padding: 0;
 }
-
-.feed {
+section.feed {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0;
+  gap: 2px;
+  padding: 2px;
+}
+div.images {
+  position: relative;
+}
+div.images img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+div.images div.chip {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  max-width: 33vw;
+}
+div.chip i {
+  cursor: pointer;
+  float: right;
+  font-size: 16px;
+  line-height: 32px;
+  padding-left: 8px;
 }
 
-section.images {
-  position: relative;
-  margin: 0.5rem;
-  margin-bottom: 1rem;
-  grid-auto-rows: auto;
-  max-width: 100%;
-  object-fit: cover;
+/* div.images div {
+  height: 35px;
+  background-color: #bbdefb;
+  padding: 0 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
+div.images i {
+  color: #607d8b;
+  font-size: 16px;
+} */
+
+/* Previous */
 
 .dark-logo {
   max-width: 140%;
@@ -205,14 +278,7 @@ form {
   margin-bottom: 3rem;
 }
 
-.home-grid {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-}
-
-.user-name {
+/* .user-name {
   display: flex;
   flex-direction: row;
   align-self: center;
@@ -229,9 +295,9 @@ form {
   text-align: center;
   border: 2px solid #bbdefb;
   color: #607d8b;
-}
+} */
 
-.chat-bubble {
+/* .chat-bubble {
   align-self: center;
   position: absolute;
   z-index: 99;
@@ -239,7 +305,7 @@ form {
   bottom: -6%;
   padding: 0.5%;
   color: #607d8b;
-}
+} */
 
 .row {
   margin-top: 10%;
@@ -251,4 +317,3 @@ form {
   margin-top: 0.8rem;
 }
 </style>
-

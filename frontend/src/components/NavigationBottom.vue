@@ -56,11 +56,17 @@ export default {
   },
   methods: {
     async sendMessage() {
-      if (this.message === '') return;
+      if (this.message.trim().length === 0) {
+        this.message = '';
+        return;
+      }
+      const message = this.message;
+      this.message = '';
+
       let data = JSON.stringify({
         user: this.id,
         chatTarget: this.chat.chatTarget,
-        message: this.message,
+        message,
         chatType: this.chat.chatType,
       });
       let res = await fetch('/api/chat/message', {
@@ -69,9 +75,6 @@ export default {
         body: data,
       });
       res = await res.json();
-      if (res.success) {
-        this.message = '';
-      }
     },
     toggleEmoji() {
       this.showEmoji = !this.showEmoji;

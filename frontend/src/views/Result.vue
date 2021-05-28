@@ -64,11 +64,15 @@ export default {
       if (this.image.location === 'hide') {
         return false;
       } else {
-        return this.image.location.toLowerCase();
+        return this.image.location?.toLowerCase();
       }
     },
     tags() {
-      return this.image.tags;
+      if (this.image?.tags) {
+        return this.image.tags;
+      } else {
+        return '';
+      }
     },
     time() {
       const options = { month: 'numeric', day: 'numeric', year: 'numeric' };
@@ -81,11 +85,16 @@ export default {
   },
   mounted() {
     this.getName();
+    if (Object.keys(this.image).length === 0) {
+      this.$router.push('/search');
+    }
   },
   methods: {
     async getName() {
-      const { name } = await User.findById(this.image.user);
-      this.name = name;
+      if (this.image?.user) {
+        const { name } = await User.findById(this.image.user);
+        this.name = name;
+      }
     },
     startChat(id, type) {
       this.$router.push(`/chat?id=${id}&type=${type}`);

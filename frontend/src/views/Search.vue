@@ -25,7 +25,7 @@
       </li>
     </ul>
 
-    <Render :images="images" />
+    <Render :images="images" v-show="images.length" />
 
     <section v-if="!results.length && !resultText" class="no-results">
       <div>

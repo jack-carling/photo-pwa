@@ -120,7 +120,6 @@ export default {
     },
     displayPhotoInfo(target) {
       if (this.images.length) {
-        let currentUser = false;
         let { name } = this.images.find((x) => x.id === target);
         name = name.charAt(name.length - 1) === 's' ? `${name}' ` : `${name}'s `;
         return name + 'photo';
