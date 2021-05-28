@@ -2,9 +2,10 @@
   <main ref="area" :class="{ 'no-margin-padding': !chat.chatTarget }">
     <section class="target" v-if="!chat.chatTarget">
       <div class="target" v-for="(chat, i) in chats" :key="i" @click="joinRoom(chat.target, chat.type)">
-        <article class="animate__animated animate__flipInX">
-          <div class="icon" v-html="displayIcon(chat.type)"></div>
+        <article class="animate__animated animate__fadeInLeft">
+          <div class="icon" v-html="displayIcon(chat.type, chat.target)"></div>
           <span v-if="chat.type === 'private'"> {{ displayInfo(chat.target) }}</span>
+          <span v-else-if="chat.type === 'photo'"> {{ displayPhotoInfo(chat.target) }}</span>
           <span v-else>{{ chat.target }}</span>
         </article>
       </div>
@@ -38,7 +39,7 @@
 
 <script>
 import mongoosy from 'mongoosy/frontend';
-const { User, Message } = mongoosy;
+const { User, Message, Upload } = mongoosy;
 
 import { convertTime } from '../services/time.js';
 
@@ -46,6 +47,8 @@ export default {
   data() {
     return {
       names: {},
+      images: {},
+      photoNames: [],
       timestamp: [],
       chats: [],
       fetchedChats: false,
@@ -58,6 +61,11 @@ export default {
     } else {
       this.$store.dispatch('startChat');
       this.getChats();
+    }
+  },
+  mounted() {
+    if (this.online) {
+      this.startQueryChat();
     }
   },
   computed: {
@@ -80,7 +88,7 @@ export default {
   methods: {
     scrollDown() {
       this.$refs.area.scrollTo({
-        top: this.$refs.area.scrollHeight + 1000,
+        top: this.$refs.area.scrollHeight,
         behavior: this.scrollBehavior,
       });
     },
@@ -105,7 +113,18 @@ export default {
       const timePassed = newTime - oldTime;
       // Only display timestamp if 15 minutes has passed (900000ms)
       if (timePassed < 900000) return;
+      setTimeout(() => {
+        this.scrollDown(); // Avoid scroll down bug when time is rendered
+      }, 100);
       return convertTime(time);
+    },
+    displayPhotoInfo(target) {
+      if (this.images.length) {
+        let currentUser = false;
+        let { name } = this.images.find((x) => x.id === target);
+        name = name.charAt(name.length - 1) === 's' ? `${name}' ` : `${name}'s `;
+        return name + 'photo';
+      }
     },
     async getNames() {
       const set = new Set();
@@ -129,6 +148,38 @@ export default {
         });
       }
     },
+    async getImages() {
+      if (this.chats.length) {
+        let ids = [];
+        let users = [];
+        let data = [];
+
+        for (let chat of this.chats) {
+          if (chat.type === 'photo') {
+            ids.push(chat.target);
+          }
+        }
+
+        let images = await Upload.find({ _id: { $in: ids } });
+
+        for (let image of images) {
+          data.push({ id: image._id, url: image.url, user: image.user });
+          users.push(image.user);
+        }
+
+        const set = new Set(users);
+        users = Array.from(set);
+
+        let userNames = await User.find({ _id: { $in: users } });
+
+        for (let i = 0; i < data.length; i++) {
+          const { name } = userNames.find((x) => x._id === data[i].user);
+          data[i].name = name;
+        }
+
+        this.images = data;
+      }
+    },
     async joinRoom(room, type) {
       const payload = { room, type };
       this.$store.commit('setChatTarget', payload);
@@ -150,13 +201,22 @@ export default {
         }
       } else {
         // Fetch private messages between users, don't join a room
-        const sent = await Message.find({
-          $and: [{ user: this.id }, { chatTarget: this.chat.chatTarget }],
-        });
+        let sent, received;
+        try {
+          sent = await Message.find({
+            $and: [{ user: this.id }, { chatTarget: this.chat.chatTarget }],
+          });
+        } catch (error) {
+          console.warn(error);
+        }
 
-        const received = await Message.find({
-          $and: [{ user: this.chat.chatTarget }, { chatTarget: this.id }],
-        });
+        try {
+          received = await Message.find({
+            $and: [{ user: this.chat.chatTarget }, { chatTarget: this.id }],
+          });
+        } catch (error) {
+          console.warn(error);
+        }
 
         messages = [...sent, ...received].sort((m1, m2) => (m1.time > m2.time ? 1 : -1));
       }
@@ -165,7 +225,7 @@ export default {
     leaveRoom() {
       this.$store.dispatch('leaveRoom');
     },
-    displayIcon(type) {
+    displayIcon(type, target) {
       if (type === 'location') {
         return '<i class="material-icons">location_on</i>';
       }
@@ -174,6 +234,12 @@ export default {
       }
       if (type === 'private') {
         return '<i class="material-icons">person</i>';
+      }
+      if (type === 'photo') {
+        if (this.images.length) {
+          const { url } = this.images.find((x) => x.id === target);
+          if (url) return `<img class="render" src="${url}" alt="" />`;
+        }
       }
       return '';
     },
@@ -219,6 +285,7 @@ export default {
         this.fetchedChats = false;
       }
 
+      this.getImages();
       this.getNames();
       this.updateChats();
     },
@@ -246,6 +313,16 @@ export default {
         }
       }
       this.chats = this.chats.sort((m1, m2) => (m1.time > m2.time ? -1 : 1));
+    },
+    startQueryChat() {
+      const id = this.$route.query.id;
+      const type = this.$route.query.type;
+      if (id) {
+        this.$nextTick(() => {
+          if (id === this.id) return; // You're not supposed to be able to chat with yourself
+          this.joinRoom(id, type);
+        });
+      }
     },
   },
   watch: {
@@ -276,6 +353,9 @@ export default {
 </script>
 
 <style scoped>
+#router {
+  overflow-x: hidden;
+}
 div.chat-container {
   display: flex;
   flex-direction: column;
@@ -325,10 +405,6 @@ section.target div.target {
   border-bottom: 1px solid #e4e4e4;
   padding: 1rem;
 }
-div.target article {
-  display: flex;
-  align-items: center;
-}
 div.icon {
   width: 50px;
   height: 50px;
@@ -353,5 +429,24 @@ section.no-chats {
 section.no-chats i {
   color: #e4e4e4;
   font-size: 5rem;
+}
+div.icon >>> img.render {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+div.target article {
+  display: grid;
+  align-items: center;
+  width: 100%;
+  grid-template-columns: min-content 1fr;
+  overflow: hidden;
+}
+article span {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 </style>

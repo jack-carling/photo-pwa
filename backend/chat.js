@@ -24,7 +24,7 @@ module.exports = (app) => {
   });
 
   app.get('/api/chat/join/:room', (req, res) => {
-    const id = req.query.id;
+    const id = req.query.id.toLowerCase();
     const type = req.query.type;
 
     let room = req.params.room;
@@ -40,7 +40,7 @@ module.exports = (app) => {
   });
 
   app.get('/api/chat/leave/:room', (req, res) => {
-    const id = req.query.id;
+    const id = req.query.id.toLowerCase();
     const type = req.query.type;
 
     let room = req.params.room;

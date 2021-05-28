@@ -5,6 +5,7 @@ import Camera from './views/Camera.vue';
 import Chat from './views/Chat.vue';
 import Account from './views/Account.vue';
 import Search from './views/Search.vue';
+import Result from './views/Result.vue';
 import Upload from './views/Upload.vue';
 
 const router = createRouter({
@@ -29,6 +30,10 @@ const router = createRouter({
     {
       path: '/search',
       component: Search,
+    },
+    {
+      path: '/result',
+      component: Result,
     },
     {
       path: '/upload',

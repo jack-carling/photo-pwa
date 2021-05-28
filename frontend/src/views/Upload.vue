@@ -44,7 +44,7 @@
     </div>
     <section class="tags">
       <div class="chip" v-for="(tag, i) in tags" :key="i">
-        {{ tag }}
+        <span>{{ tag }}</span>
         <i class="material-icons" @click="deleteTag(i)">close</i>
       </div>
     </section>
@@ -103,7 +103,8 @@ export default {
   },
   methods: {
     addTag() {
-      const input = this.inputTags.split(' ');
+      let input = this.inputTags.toLowerCase();
+      input = input.split(' ');
       input.forEach((tag) => {
         if (!this.tags.includes(tag) && tag !== '') {
           this.tags.push(tag);

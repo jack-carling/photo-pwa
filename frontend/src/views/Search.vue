@@ -3,7 +3,7 @@
     <section class="search">
       <div>
         <div class="search">
-          <input type="text" v-model="input" @keyup.enter="search" placeholder="Search..." />
+          <input type="text" autocomplete="off" v-model="input" @keyup.enter="search" placeholder="Search..." />
           <i v-if="input.length" @click="clearInput" class="material-icons">cancel</i>
         </div>
         <div class="icon" @click="search">
@@ -19,11 +19,13 @@
         </div>
         {{ resultText }}
       </li>
-      <li v-for="(result, i) in results" :key="i">
+      <li v-for="(result, i) in results" :key="i" @click="handleResult(result)">
         <div class="icon" v-html="displayIcon(result)"></div>
-        {{ result.name }}
+        <span>{{ result.name }}</span>
       </li>
     </ul>
+
+    <Render :images="images" />
 
     <section v-if="!results.length && !resultText" class="no-results">
       <div>
@@ -35,17 +37,28 @@
 </template>
 
 <script>
+import Render from '../components/Render.vue';
+
 import mongoosy from 'mongoosy/frontend';
 
 const { User, Upload } = mongoosy;
 
 export default {
+  components: {
+    Render,
+  },
   data() {
     return {
       input: '',
       results: [],
       resultText: '',
+      images: [],
     };
+  },
+  computed: {
+    name() {
+      return this.$store.state.user.name;
+    },
   },
   methods: {
     clearInput() {
@@ -62,6 +75,7 @@ export default {
     },
     async search() {
       const input = this.input;
+      this.images = [];
 
       if (input.length < 2) {
         this.results = [];
@@ -75,15 +89,18 @@ export default {
       });
       let results = [];
       results = [...users];
+      results = results.filter((x) => x.name !== this.name); // You can't search for yourself
 
       for (let i = 0; i < uploads.length; i++) {
         if (q.test(uploads[i].location)) {
+          // You cannot find pictures that has hidden their location by searching for hide
+          if (uploads[i].location === 'hide') break;
           const found = results.find((x) => {
-            return x.name === uploads[i].location;
+            return x.name === uploads[i].location.toLowerCase();
           });
           if (found) break;
           results.push({
-            name: uploads[i].location,
+            name: uploads[i].location.toLowerCase(),
             type: 'location',
           });
         }
@@ -91,11 +108,11 @@ export default {
         for (let j = 0; j < uploads[i].tags.length; j++) {
           if (q.test(uploads[i].tags[j])) {
             const found = results.find((x) => {
-              return x.name === uploads[i].tags[j];
+              return x.name === uploads[i].tags[j].toLowerCase();
             });
             if (found) break;
             results.push({
-              name: uploads[i].tags[j],
+              name: uploads[i].tags[j].toLowerCase(),
               type: 'tag',
             });
           }
@@ -119,6 +136,33 @@ export default {
       } else {
         this.resultText = results.length + ' results';
       }
+    },
+    handleResult(result) {
+      if (result.type !== 'tag' && result.type !== 'location') {
+        const id = result._id;
+        this.$router.push(`/chat?id=${id}&type=private`);
+      } else if (result.type === 'tag') {
+        this.searchImages(result.name, result.type);
+      } else {
+        this.searchImages(result.name, result.type);
+      }
+    },
+    async searchImages(name, type) {
+      const re = new RegExp(name, 'i');
+      let images;
+      if (type === 'tag') {
+        images = await Upload.find({ tags: re });
+      } else {
+        images = await Upload.find({ location: re });
+      }
+      this.images = images;
+      this.results = [];
+      if (images.length === 1) {
+        this.resultText = images.length + ' result';
+      } else {
+        this.resultText = images.length + ' results';
+      }
+      this.input = name;
     },
   },
 };
@@ -154,6 +198,7 @@ input {
   background-color: #eceff1 !important;
   height: initial !important;
   padding: 0.5rem 1rem !important;
+  padding-right: 2.5rem !important;
   border-radius: 999px !important;
 }
 section div.icon {
@@ -173,8 +218,13 @@ li {
   border-bottom: 1px solid #eceff1;
   display: flex;
   align-items: center;
+  width: 100%;
 }
-
+li span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 li div.icon {
   margin-right: 1rem;
   color: #ccc;
