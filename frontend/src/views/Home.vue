@@ -80,17 +80,17 @@
       </div>
        -->
     </section>
-    <section class="images">
-      <img 
-        class="home-grid"
-        :src="upload.url"
-        v-for="(upload, index) in uploads"
-        v-bind:key="index"
-      />
-      <div class="user-name">
-        <p></p>
-      </div>
-    </section>
+    <div class="feed">
+      <section class="images" v-for="upload in uploads" v-bind:key="upload">
+        <img :src="upload.url" class="home-grid" />
+        <p class="user-name" @click="$router.push('/account')">
+          {{ profile.name }}
+        </p>
+        <div class="chat-bubble" @click="$router.push('/chat')">
+          <i class="tiny material-icons">question_answer</i>
+        </div>
+      </section>
+    </div>
   </div>
 </template>
   
@@ -108,15 +108,16 @@ export default {
     online() {
       return this.$store.state.user.online;
     },
+    profile() {
+      return this.$store.state.user;
+    },
   },
   async mounted() {
     const uploads = await Upload.find();
     this.uploads = uploads;
-  }
+  },
 };
 </script>
-
-
 
 <style scoped>
 * {
@@ -128,14 +129,18 @@ export default {
   padding: 0;
 }
 
-section.images {
-  position: relative;
-  margin: 1rem;
+.feed {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+}
+
+section.images {
+  position: relative;
+  margin: 0.5rem;
+  margin-bottom: 1rem;
   grid-auto-rows: auto;
   max-width: 100%;
-  gap: 1%;
   object-fit: cover;
 }
 
@@ -208,11 +213,32 @@ form {
 }
 
 .user-name {
+  display: flex;
+  flex-direction: row;
+  align-self: center;
   position: absolute;
-  right: 1rem;
-  bottom: 1rem;
-  width: 50px;
-  height: 50px;
+  z-index: 99;
+  align-items: center;
+  top: 86%;
+  width: 100.5%;
+  height: 16%;
+  background: #bbdefb;
+  padding: 6%;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-align: center;
+  border: 2px solid #bbdefb;
+  color: #607d8b;
+}
+
+.chat-bubble {
+  align-self: center;
+  position: absolute;
+  z-index: 99;
+  left: 80%;
+  bottom: -6%;
+  padding: 0.5%;
+  color: #607d8b;
 }
 
 .row {
@@ -225,3 +251,4 @@ form {
   margin-top: 0.8rem;
 }
 </style>
+
