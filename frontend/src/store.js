@@ -12,6 +12,14 @@ const store = createStore({
     },
     accountError: '',
     locations: [],
+    uploads: [],
+    upload: {
+      page: 1,
+      total: 0,
+      offset: 0,
+      new: 0,
+    },
+    scrollPosition: 0,
     messages: [],
     photo: { data: '', isSaved: false },
     photoSettings: {},
@@ -57,6 +65,32 @@ const store = createStore({
     },
     saveSize(state, size) {
       state.size = size;
+    },
+    saveUploads(state, uploads) {
+      state.uploads = [...state.uploads, ...uploads];
+    },
+    saveNewUploads(state, uploads) {
+      state.uploads = [...uploads, ...state.uploads];
+    },
+    increasePage(state) {
+      state.upload.page++;
+    },
+    setUploadCount(state, count) {
+      const currentCount = state.upload.total;
+      if (currentCount !== count) {
+        const offset = count - currentCount;
+        state.upload.total = count;
+        state.upload.offset = offset;
+      }
+    },
+    resetUploadOffset(state) {
+      state.upload.offset = 0;
+    },
+    setNewUploads(state, count) {
+      state.upload.new = count;
+    },
+    scrollPosition(state, position) {
+      state.scrollPosition = position;
     },
     setResultImage(state, image) {
       state.image = {};

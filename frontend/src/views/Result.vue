@@ -12,7 +12,7 @@
         Info
       </span>
       <div class="chip" @click="startChat(id, 'private')">
-        <span>{{ name }}</span>
+        <span v-html="name"></span>
         <i class="material-icons">question_answer</i>
       </div>
       <div class="chip">
@@ -53,7 +53,7 @@ const { User } = mongoosy;
 export default {
   data() {
     return {
-      name: '',
+      name: '&nbsp;',
     };
   },
   computed: {

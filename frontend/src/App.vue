@@ -10,6 +10,9 @@
 import NavigationTop from './components/NavigationTop.vue';
 import NavigationBottom from './components/NavigationBottom.vue';
 
+import mongoosy from 'mongoosy/frontend';
+const { Upload } = mongoosy;
+
 export default {
   components: {
     NavigationTop,
@@ -17,6 +20,11 @@ export default {
   },
   async created() {
     this.$store.dispatch('check');
+  },
+  async mounted() {
+    const count = await Upload.countDocuments();
+    this.$store.commit('setUploadCount', count);
+    this.$store.commit('resetUploadOffset');
   },
 };
 </script>
@@ -51,6 +59,11 @@ main.app {
 .input-field input[type='password']:focus {
   border-bottom: 1px solid #00acc1 !important;
   box-shadow: 0 1px 0 0 #00acc1 !important;
+}
+.input-field input[type='text']:focus + label,
+.input-field input[type='email']:focus + label,
+.input-field input[type='password']:focus + label {
+  color: #00acc1 !important;
 }
 div.chip {
   display: inline-flex;

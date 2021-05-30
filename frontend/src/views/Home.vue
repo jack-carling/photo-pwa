@@ -1,5 +1,5 @@
 <template>
-  <main>
+  <main ref="main">
     <section v-if="!online" class="hero-banner">
       <div class="search">
         <input
@@ -20,10 +20,15 @@
       </div>
     </section>
 
-    <section class="feed animate__animated animate__slideInUp" ref="feed">
-      <div class="images" v-for="(upload, i) in uploads" v-bind:key="i" @click="handleImage(upload)">
-        <img :src="upload.url" class="render" />
-        <div class="chip">
+    <section class="feed animate__animated" :class="{ animate__slideInUp: !online && !scrollPosition }" ref="feed">
+      <div
+        class="images animate__animated animate__fadeIn animate__slow"
+        v-for="(upload, i) in uploads"
+        v-bind:key="i"
+        @click="handleImage(upload)"
+      >
+        <img @load="resizeImages" :src="upload.url" class="render" />
+        <div class="chip animate__animated animate__fadeIn animate__slow">
           <span>{{ displayName(upload.user) }}</span>
           <i class="material-icons">person</i>
         </div>
@@ -31,7 +36,12 @@
     </section>
     <footer ref="footer">
       <div v-if="!fetchedAll">
-        <img v-show="loading" src="../assets/loader.gif" alt="" />
+        <img
+          class="animate__animated animate__fadeIn animate__slow"
+          v-show="loading"
+          src="../assets/loader.gif"
+          alt=""
+        />
       </div>
       <div class="footer-message" v-else>
         <i class="material-icons">check_circle</i>
@@ -48,13 +58,10 @@ const { Upload, User } = mongoosy;
 export default {
   data() {
     return {
-      uploads: [],
       names: [],
       input: '',
-      maxLoad: 6,
-      uploadCount: 0,
+      maxLoad: 8,
       fetchedAll: false,
-      page: 1,
       observer: null,
       loading: false,
     };
@@ -64,46 +71,83 @@ export default {
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.resizeImages);
+    if (this.observer) {
+      this.observer.disconnect();
+    }
+    this.$store.commit('scrollPosition', this.$refs.main.scrollTop);
   },
   computed: {
     online() {
       return this.$store.state.user.online;
     },
-    uploadsRendered() {
-      return this.uploads.length;
+    uploads() {
+      return this.$store.state.uploads;
+    },
+    upload() {
+      return this.$store.state.upload;
+    },
+    scrollPosition() {
+      return this.$store.state.scrollPosition;
     },
   },
   async mounted() {
     const count = await Upload.countDocuments();
-    this.uploadCount = count;
+    this.$store.commit('setUploadCount', count);
+    this.getNewData();
 
-    this.getData();
+    this.observer = new IntersectionObserver(([entry]) => {
+      if (entry && entry.isIntersecting) {
+        this.loading = true;
+        this.getData();
+      }
+    });
 
-    setTimeout(() => {
-      this.observer = new IntersectionObserver(([entry]) => {
-        if (entry && entry.isIntersecting) {
-          this.loading = true;
-          this.getData();
-        }
-      });
+    this.observer.observe(this.$refs.footer);
 
-      this.observer.observe(this.$refs.footer);
-    }, 1000);
+    if (!this.names.length) this.getNames();
+
+    this.$nextTick(() => {
+      this.$refs.main.scrollBy({ top: this.scrollPosition });
+    });
   },
   methods: {
     async getData() {
-      if (this.uploadCount === this.uploads.length) {
+      const total = this.uploads.length + this.upload.offset;
+      if (total >= this.upload.total) {
         this.fetchedAll = true;
         return;
       }
-      const numersToSkip = this.maxLoad * (this.page - 1);
-      const uploads = await Upload.find().sort({ time: -1 }).skip(numersToSkip).limit(this.maxLoad);
 
-      this.uploads = [...this.uploads, ...uploads];
+      const even = this.uploads.length % 2 === 0 ? true : false;
+
+      let numberToFetch;
+      if (even) {
+        numberToFetch = this.maxLoad;
+      } else {
+        numberToFetch = this.maxLoad + 1;
+      }
+
+      const numbersToSkip = this.maxLoad * (this.upload.page - 1) + this.upload.offset;
+      const uploads = await Upload.find().sort({ time: -1 }).skip(numbersToSkip).limit(numberToFetch);
+
+      this.$store.commit('saveUploads', uploads);
 
       this.getNames();
-      this.page++;
+      this.$store.commit('increasePage');
       this.loading = false;
+    },
+    async getNewData() {
+      const offset = this.upload.offset;
+      const newUploads = this.upload.new;
+      if (!offset) return;
+
+      if (newUploads > offset) return;
+      const numberOfNew = offset - newUploads;
+
+      const numbersToSkip = numberOfNew - offset;
+      const uploads = await Upload.find().sort({ time: -1 }).skip(numbersToSkip).limit(numberOfNew);
+      this.$store.commit('saveNewUploads', uploads);
+      this.$store.commit('setNewUploads', numberOfNew);
     },
     search() {
       const search = `/search?q=${this.input}`;
@@ -116,10 +160,8 @@ export default {
     resizeImages() {
       this.$nextTick(() => {
         const img = document.querySelector('.render');
-        if (img) {
-          const size = img.offsetWidth + 'px';
-          this.$refs.feed.style.setProperty('grid-auto-rows', size);
-        }
+        const size = img.offsetWidth + 'px';
+        this.$refs.feed.style.setProperty('grid-auto-rows', size);
       });
     },
     async getNames() {
@@ -149,13 +191,6 @@ export default {
         return name.name;
       } else {
         return '';
-      }
-    },
-  },
-  watch: {
-    uploadsRendered() {
-      if (this.uploadsRendered) {
-        this.resizeImages();
       }
     },
   },
@@ -202,9 +237,6 @@ section.hero-banner {
   background: linear-gradient(0deg, rgba(255, 255, 255, 1) 0%, rgba(0, 0, 0, 0) 20%),
     url('../assets/background.png') no-repeat center center;
   background-size: cover;
-}
-.animate__animated {
-  --animate-duration: 1s;
 }
 div.homepage-elements {
   position: absolute;
