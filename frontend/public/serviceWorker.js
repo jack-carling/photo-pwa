@@ -1,5 +1,5 @@
 let cache;
-let missingImageUrl = 'images/missing-image.png';
+let missingImageUrl = 'img/missing-image.gif';
 
 self.addEventListener('install', (e) => onInstall());
 
@@ -27,7 +27,9 @@ async function cacher(request) {
     response = await cache.match(request);
     response = response || (await fallbackResponses(request));
   } else if (request.method === 'GET') {
-    cache.put(request, response.clone()); // no await needed!
+    if (!request.url.includes('/api/')) {
+      cache.put(request, response.clone());
+    }
   }
   return response;
 }

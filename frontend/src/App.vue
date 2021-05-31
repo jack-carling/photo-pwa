@@ -2,6 +2,7 @@
   <main class="app">
     <NavigationTop />
     <router-view id="router"></router-view>
+    <Offline />
     <NavigationBottom />
   </main>
 </template>
@@ -9,6 +10,7 @@
 <script>
 import NavigationTop from './components/NavigationTop.vue';
 import NavigationBottom from './components/NavigationBottom.vue';
+import Offline from './components/Offline.vue';
 
 import mongoosy from 'mongoosy/frontend';
 const { Upload } = mongoosy;
@@ -17,6 +19,7 @@ export default {
   components: {
     NavigationTop,
     NavigationBottom,
+    Offline,
   },
   async created() {
     this.$store.dispatch('check');
@@ -52,7 +55,7 @@ main.app {
   height: 100vh;
 }
 .input-field input {
-  line-height: 0;
+  line-height: 0 !important;
 }
 .input-field input[type='text']:focus,
 .input-field input[type='email']:focus,
