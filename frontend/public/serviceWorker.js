@@ -1,46 +1,51 @@
-const DYNAMIC_CACHE = 'dynamic-cache-v1';
+let cache; // holder for open cache
+let missingImageUrl = 'images/missing-image.png';
 
-self.addEventListener('install', (evt) => {
-  console.log('[Service Worker] installing');
+self.addEventListener('install', (e) => onInstall());
 
-  // trigger activation programmatically
+self.addEventListener('activate', (e) => onActivate());
+
+self.addEventListener('fetch', (e) => e.respondWith(cacher(e.request)));
+
+async function onInstall() {
   self.skipWaiting();
-});
+  cache = cache || (await caches.open('cache'));
+  return cache.addAll(['/', missingImageUrl]);
+}
 
-self.addEventListener('activate', (evt) => {
-  console.log('[Service Worker] activating');
-
-  // immediately use the 'fetch'-event when activated
+async function onActivate() {
   self.clients.claim();
-});
+}
 
-self.addEventListener('fetch', (evt) => {
-  // don't cache images from PokeAPI
-  if (evt.request.url.includes('/PokeAPI/sprites/master/sprites/pokemon/')) {
-    return;
-  }
-
-  // respondWith will halt the service worker
-  // from going to sleep before onFetch is finished
-  evt.respondWith(onFetch(evt));
-});
-
-async function onFetch(evt) {
-  // if online
+async function cacher(request) {
+  cache = cache || (await caches.open('cache'));
+  let response;
   if (navigator.onLine) {
-    // res == response
-    let res = await fetch(evt.request);
-    let cache = await caches.open(DYNAMIC_CACHE);
-
-    // save response to cache
-    // when saving the response we must clone it
-    // otherwise the response gets consumed, and
-    // cannot be returns to the client
-    cache.put(evt.request, res.clone());
-
-    return res;
+    response = await fetch(request).catch((e) => (response = null));
   }
+  if (!response) {
+    response = await cache.match(request);
+    response = response || (await fallbackResponses(request));
+  } else if (request.method === 'GET') {
+    cache.put(request, response.clone()); // no await needed!
+  }
+  return response;
+}
 
-  // if offline, return cached response
-  return caches.match(evt.request);
+async function fallbackResponses(request) {
+  let response,
+    key,
+    cacheKeys = await cache.keys();
+  let base = location.protocol + '//' + location.host + '/';
+  let route = request.url.split(base)[1] || '';
+  let extension = request.url.slice(-4);
+  if (route && !route.includes('/') && !route.includes('.')) {
+    key = cacheKeys.find(({ url }) => url == base);
+  }
+  if (['.jpg', '.png', '.gif'].includes(extension)) {
+    let img = base + missingImageUrl;
+    key = cacheKeys.find(({ url }) => url === img);
+  }
+  response = key && (await cache.match(key));
+  return response;
 }
