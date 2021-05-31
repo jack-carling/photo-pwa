@@ -1,14 +1,19 @@
 <template>
   <main ref="area" :class="{ 'no-margin-padding': !chat.chatTarget }">
     <section class="target" v-if="!chat.chatTarget">
-      <div class="target" v-for="(chat, i) in chats" :key="i" @click="joinRoom(chat.target, chat.type)">
-        <article class="animate__animated animate__fadeInLeft">
-          <div class="icon" v-html="displayIcon(chat.type, chat.target)"></div>
-          <span v-if="chat.type === 'private'"> {{ displayInfo(chat.target) }}</span>
-          <span v-else-if="chat.type === 'photo'"> {{ displayPhotoInfo(chat.target) }}</span>
-          <span v-else>{{ chat.target }}</span>
-        </article>
-      </div>
+      <article v-if="!loading">
+        <div class="target" v-for="(chat, i) in chats" :key="i" @click="joinRoom(chat.target, chat.type)">
+          <article class="animate__animated animate__fadeInLeft">
+            <div class="icon" v-html="displayIcon(chat.type, chat.target)"></div>
+            <span v-if="chat.type === 'private'"> {{ displayInfo(chat.target) }}</span>
+            <span v-else-if="chat.type === 'photo'"> {{ displayPhotoInfo(chat.target) }}</span>
+            <span v-else>{{ chat.target }}</span>
+          </article>
+        </div>
+      </article>
+      <article class="loading" v-else>
+        <img class="animate__animated animate__fadeIn animate__slow" src="../assets/loader.gif" alt="" />
+      </article>
     </section>
 
     <section v-else>
@@ -53,6 +58,7 @@ export default {
       chats: [],
       fetchedChats: false,
       scrollBehavior: 'auto',
+      loading: true,
     };
   },
   created() {
@@ -120,7 +126,9 @@ export default {
     },
     displayPhotoInfo(target) {
       if (this.images.length) {
-        let { name } = this.images.find((x) => x.id === target);
+        let name = this.images.find((x) => x.id === target);
+        if (!name?.name) return '';
+        name = name.name;
         name = name.charAt(name.length - 1) === 's' ? `${name}' ` : `${name}'s `;
         return name + 'photo';
       }
@@ -220,6 +228,18 @@ export default {
         messages = [...sent, ...received].sort((m1, m2) => (m1.time > m2.time ? 1 : -1));
       }
       this.$store.commit('previousMessages', messages);
+
+      if (type === 'private') {
+        const name = this.displayInfo(room);
+        if (!name) return;
+        this.$store.commit('setChatName', name);
+      } else if (type === 'photo') {
+        const name = this.displayPhotoInfo(room);
+        if (!name) return;
+        this.$store.commit('setChatName', name);
+      } else {
+        this.$store.commit('setChatName', room);
+      }
     },
     leaveRoom() {
       this.$store.dispatch('leaveRoom');
@@ -236,8 +256,8 @@ export default {
       }
       if (type === 'photo') {
         if (this.images.length) {
-          const { url } = this.images.find((x) => x.id === target);
-          if (url) return `<img class="render" src="${url}" alt="" />`;
+          const url = this.images.find((x) => x.id === target);
+          if (url?.url) return `<img class="render" src="${url.url}" alt="" />`;
         }
       }
       return '';
@@ -289,11 +309,51 @@ export default {
       this.updateChats();
     },
     async updateChats() {
-      const messages = await Message.find({
-        $or: [{ user: this.id }, { chatTarget: this.id }],
-      });
+      // const messages = await Message.find({
+      //   $or: [{ user: this.id }, { chatTarget: this.id }],
+      // });
 
-      for (let message of messages) {
+      let chats = [];
+      let privateChats = [];
+
+      for (let chat of this.chats) {
+        if (chat.type !== 'private') {
+          chats.push(chat.target);
+        } else {
+          privateChats.push(chat.target);
+        }
+      }
+
+      let collection = [];
+
+      for (let i = 0; i < chats.length; i++) {
+        const message = await Message.find({ chatTarget: { $in: chats[i] } })
+          .sort({ time: -1 })
+          .limit(1);
+        collection.push(message);
+      }
+      for (let i = 0; i < privateChats.length; i++) {
+        const message = await Message.find({
+          $or: [
+            {
+              chatType: 'private',
+              user: this.id,
+              chatTarget: { $in: privateChats[i] },
+            },
+            {
+              chatType: 'private',
+              user: { $in: privateChats[i] },
+              chatTarget: this.id,
+            },
+          ],
+        })
+          .sort({ time: -1 })
+          .limit(1);
+        collection.push(message);
+      }
+      collection = collection.flat();
+
+      for (let message of collection) {
         let target;
         if (message.chatType === 'private') {
           if (message.user === this.id) {
@@ -312,6 +372,7 @@ export default {
         }
       }
       this.chats = this.chats.sort((m1, m2) => (m1.time > m2.time ? -1 : 1));
+      this.loading = false;
     },
     startQueryChat() {
       const id = this.$route.query.id;
@@ -400,6 +461,9 @@ span.time {
   padding: 0 !important;
   margin: 0 !important;
 }
+section.target {
+  height: 100%;
+}
 section.target div.target {
   width: 100vw;
   height: 80px;
@@ -449,5 +513,13 @@ article span {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+article.loading {
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+article img {
+  height: 25px;
 }
 </style>

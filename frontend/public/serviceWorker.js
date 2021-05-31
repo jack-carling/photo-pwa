@@ -28,7 +28,10 @@ async function cacher(request) {
     response = response || (await fallbackResponses(request));
   } else if (request.method === 'GET') {
     if (!request.url.includes('/api/')) {
-      cache.put(request, response.clone());
+      if (request.url.indexOf('http') === 0) {
+        // Don't cache non-http requests like 'chrome-extensions'
+        cache.put(request, response.clone());
+      }
     }
   }
   return response;

@@ -58,7 +58,6 @@ const { Upload, User } = mongoosy;
 export default {
   data() {
     return {
-      names: [],
       input: '',
       maxLoad: 8,
       fetchedAll: false,
@@ -88,6 +87,9 @@ export default {
     },
     scrollPosition() {
       return this.$store.state.scrollPosition;
+    },
+    names() {
+      return this.$store.state.namesInFeed;
     },
   },
   async mounted() {
@@ -135,7 +137,7 @@ export default {
       this.$store.commit('increasePage');
       this.loading = false;
 
-      await this.getNames();
+      this.getNames();
     },
     search() {
       const search = `/search?q=${this.input}`;
@@ -154,6 +156,7 @@ export default {
     },
     async getNames() {
       let users = [];
+      let namesToAdd = [];
       for (let upload of this.uploads) {
         users.push(upload.user);
       }
@@ -170,8 +173,9 @@ export default {
         const found = this.names.find((x) => x.user === user);
         if (found) continue;
 
-        this.names.push({ name: name?.name, user });
+        namesToAdd.push({ name: name?.name, user });
       }
+      this.$store.commit('addNamesToFeed', namesToAdd);
     },
     displayName(target) {
       let name = this.names.find((x) => x.user === target);
@@ -194,7 +198,7 @@ section.feed {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 2px;
-  padding: 2px;
+  padding: 0 2px;
 }
 div.images {
   position: relative;

@@ -18,6 +18,7 @@ const store = createStore({
       total: 0,
       offset: 0,
     },
+    namesInFeed: [],
     scrollPosition: 0,
     messages: [],
     photo: { data: '', isSaved: false },
@@ -25,6 +26,7 @@ const store = createStore({
     size: '',
     chat: { chatTarget: '', chatType: '' },
     image: {},
+    chatName: '',
   },
   mutations: {
     pushMessage(state, message) {
@@ -85,6 +87,12 @@ const store = createStore({
     },
     resetUploadOffset(state) {
       state.upload.offset = 0;
+    },
+    addNamesToFeed(state, names) {
+      state.namesInFeed = [...state.namesInFeed, ...names];
+    },
+    setChatName(state, name) {
+      state.chatName = name;
     },
     scrollPosition(state, position) {
       state.scrollPosition = position;

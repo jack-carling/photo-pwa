@@ -97,6 +97,15 @@ export default {
       }
     },
     startChat(id, type) {
+      let name = this.name;
+      if (type === 'private') {
+        this.$store.commit('setChatName', name);
+      } else if (type === 'photo') {
+        name = name.charAt(name.length - 1) === 's' ? `${name}' ` : `${name}'s `;
+        this.$store.commit('setChatName', name + 'photo');
+      } else {
+        this.$store.commit('setChatName', id);
+      }
       this.$router.push(`/chat?id=${id}&type=${type}`);
     },
   },
