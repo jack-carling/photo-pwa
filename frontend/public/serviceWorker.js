@@ -1,4 +1,4 @@
-let cache; // holder for open cache
+let cache;
 let missingImageUrl = 'images/missing-image.png';
 
 self.addEventListener('install', (e) => onInstall());
