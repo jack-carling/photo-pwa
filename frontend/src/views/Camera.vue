@@ -32,7 +32,7 @@
       <div class="button" @click="confirmUpload">
         <i class="material-icons">done</i>
       </div>
-      <div class="button" @click="captured = false">
+      <div class="button" @click="clearPhoto">
         <i class="material-icons">clear</i>
       </div>
     </div>
@@ -231,6 +231,11 @@ export default {
       } else {
         this.$refs.image.style.height = 'auto';
       }
+    },
+    clearPhoto() {
+      this.$store.commit('savePhoto', false);
+      this.photo = false;
+      this.captured = false;
     },
   },
 };

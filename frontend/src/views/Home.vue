@@ -34,7 +34,7 @@
         </div>
       </div>
     </section>
-    <footer ref="footer">
+    <footer ref="footer" v-show="upload.total >= 8">
       <div v-if="!fetchedAll">
         <img
           class="animate__animated animate__fadeIn animate__slow"
@@ -93,7 +93,10 @@ export default {
   async mounted() {
     const count = await Upload.countDocuments();
     this.$store.commit('setUploadCount', count);
-    this.getNewData();
+
+    if (this.upload.total <= 8) {
+      await this.getData();
+    }
 
     this.observer = new IntersectionObserver(([entry]) => {
       if (entry && entry.isIntersecting) {
@@ -103,8 +106,6 @@ export default {
     });
 
     this.observer.observe(this.$refs.footer);
-
-    if (!this.names.length) this.getNames();
 
     this.$nextTick(() => {
       this.$refs.main.scrollBy({ top: this.scrollPosition });
@@ -131,23 +132,10 @@ export default {
       const uploads = await Upload.find().sort({ time: -1 }).skip(numbersToSkip).limit(numberToFetch);
 
       this.$store.commit('saveUploads', uploads);
-
-      this.getNames();
       this.$store.commit('increasePage');
       this.loading = false;
-    },
-    async getNewData() {
-      const offset = this.upload.offset;
-      const newUploads = this.upload.new;
-      if (!offset) return;
 
-      if (newUploads > offset) return;
-      const numberOfNew = offset - newUploads;
-
-      const numbersToSkip = numberOfNew - offset;
-      const uploads = await Upload.find().sort({ time: -1 }).skip(numbersToSkip).limit(numberOfNew);
-      this.$store.commit('saveNewUploads', uploads);
-      this.$store.commit('setNewUploads', numberOfNew);
+      await this.getNames();
     },
     search() {
       const search = `/search?q=${this.input}`;

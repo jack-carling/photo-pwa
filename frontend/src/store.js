@@ -17,7 +17,6 @@ const store = createStore({
       page: 1,
       total: 0,
       offset: 0,
-      new: 0,
     },
     scrollPosition: 0,
     messages: [],
@@ -71,6 +70,7 @@ const store = createStore({
     },
     saveNewUploads(state, uploads) {
       state.uploads = [...uploads, ...state.uploads];
+      state.scrollPosition = 0; // If you upload a picture you're brought to the top
     },
     increasePage(state) {
       state.upload.page++;
@@ -85,9 +85,6 @@ const store = createStore({
     },
     resetUploadOffset(state) {
       state.upload.offset = 0;
-    },
-    setNewUploads(state, count) {
-      state.upload.new = count;
     },
     scrollPosition(state, position) {
       state.scrollPosition = position;

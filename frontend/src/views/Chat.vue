@@ -431,7 +431,7 @@ section.no-chats i {
   color: #e4e4e4;
   font-size: 5rem;
 }
-div.icon >>> img.render {
+div.icon :deep(img.render) {
   width: 50px;
   height: 50px;
   object-fit: cover;

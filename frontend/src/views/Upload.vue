@@ -147,18 +147,21 @@ export default {
         const location = this.pickManually ? this.inputLocation : this.pickedLocation;
         const time = Date.now();
 
-        let upload = new Upload({
+        const payload = {
           user: this._id,
           url: url,
           location: location,
           tags: this.tags,
           time: time,
-        });
-        let uploaded = await upload.save();
+        };
+
+        let upload = new Upload(payload);
+        await upload.save();
         this.uploaded = true;
         this.$nextTick(() => {
           this.scrollDown();
         });
+        this.$store.commit('saveNewUploads', [payload]);
       } else {
         this.pending = false;
       }
