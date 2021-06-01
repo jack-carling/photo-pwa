@@ -111,6 +111,9 @@ export default {
 
     this.$nextTick(() => {
       this.$refs.main.scrollBy({ top: this.scrollPosition });
+      if (this.scrollPosition === 0) {
+        this.getNames();
+      }
     });
   },
   methods: {
