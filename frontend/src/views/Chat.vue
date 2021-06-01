@@ -1,6 +1,6 @@
 <template>
   <main ref="area" :class="{ 'no-margin-padding': !chat.chatTarget }">
-    <section class="target" v-if="!chat.chatTarget">
+    <section class="target" v-if="!chat.chatTarget && chats.length">
       <article v-if="!loading">
         <div class="target" v-for="(chat, i) in chats" :key="i" @click="joinRoom(chat.target, chat.type)">
           <article class="animate__animated animate__fadeInLeft">
