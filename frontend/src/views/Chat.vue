@@ -263,6 +263,7 @@ export default {
       return '';
     },
     async getChats() {
+      this.loading = true;
       let chats = await Message.find({ user: this.id });
 
       chats.forEach((chat) => {
@@ -309,10 +310,6 @@ export default {
       this.updateChats();
     },
     async updateChats() {
-      // const messages = await Message.find({
-      //   $or: [{ user: this.id }, { chatTarget: this.id }],
-      // });
-
       let chats = [];
       let privateChats = [];
 
@@ -371,7 +368,9 @@ export default {
           this.chats[index].time = time;
         }
       }
+
       this.chats = this.chats.sort((m1, m2) => (m1.time > m2.time ? -1 : 1));
+
       this.loading = false;
     },
     startQueryChat() {
