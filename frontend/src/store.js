@@ -30,7 +30,13 @@ const store = createStore({
   },
   mutations: {
     pushMessage(state, message) {
-      state.messages.push(message);
+      // Avoid private messages being pushed into non-private chats
+      if (message.chatType === 'private') {
+        if (message.chatTarget !== state.chat.chatTarget && message.user !== state.chat.chatTarget) return;
+        state.messages.push(message);
+      } else {
+        state.messages.push(message);
+      }
     },
     previousMessages(state, messages) {
       state.messages = [...messages];
