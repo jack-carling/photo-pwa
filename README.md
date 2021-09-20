@@ -1,30 +1,32 @@
 # Apperture
 
-## Getting started
+School assignment • group project by Jack, Marijune, Padma, Robin and Victoria
 
-Open the root folder in two terminals
+## About
 
-💻 Terminal 1
+A Progressive Web Application surrounding photos where users can capture and upload images, browse other users' pictures and chat privately or in a group about a certain topic.
+
+## Screenshots
+
+<div>
+<img src="https://user-images.githubusercontent.com/72305598/134035850-f103c88f-348d-4775-93ed-230484368442.png" width="49%">
+<img src="https://user-images.githubusercontent.com/72305598/134035845-c1febdb0-4bc1-40c2-9a82-7b348a4875f6.png" width="49%">
+</div>
+
+## Setup
 
 ```bash
+# Terminal 1 (frontend)
+
 cd frontend/
-```
-
-```bash
 npm install
-```
-
-```bash
 npm run dev
 ```
 
-💻 Terminal 2
-
 ```bash
+# Terminal 2 (backend)
+
 cd backend/
-```
-
-```bash
 npm install
 ```
 
@@ -51,5 +53,7 @@ MONGO_DB= ...
 Now you're ready to go!
 
 ```bash
+# Terminal 2 (backend)
+
 npm run dev
 ```
